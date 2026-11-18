@@ -4,9 +4,9 @@ import type { Hackathon } from "@/types/hackathon";
 import { getDb } from "./index";
 import { hackathonParticipants, hackathons, hackathonSubmissions, user } from "./schema";
 
-type HackathonRow = typeof hackathons.$inferSelect;
+export type HackathonRow = typeof hackathons.$inferSelect;
 
-function mapHackathonRowToHackathon(row: HackathonRow): Hackathon {
+export function mapHackathonRowToHackathon(row: HackathonRow): Hackathon {
   return {
     id: row.slug,
     title: row.title,

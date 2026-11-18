@@ -177,7 +177,7 @@ async function HackathonDetailContent({
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <Link
           href="/hackathons"
           className={cn(
@@ -187,6 +187,18 @@ async function HackathonDetailContent({
         >
           ← Назад к хакатонам
         </Link>
+
+        {hackathon.status === "finished" ? (
+          <Link
+            href={`/hackathons/${hackathon.id}/results`}
+            className={cn(
+              buttonVariants({ variant: "outline", size: "lg" }),
+              "min-h-11 px-4 text-base"
+            )}
+          >
+            Результаты
+          </Link>
+        ) : null}
       </div>
 
       <div className="flex flex-col gap-4">

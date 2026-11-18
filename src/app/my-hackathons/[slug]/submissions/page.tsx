@@ -193,6 +193,17 @@ async function HackathonSubmissionsContent({
         </Link>
 
         <div className="flex flex-wrap items-center gap-2.5">
+          {hackathon.status === "finished" ? (
+            <Link
+              href={`/hackathons/${hackathon.id}/results`}
+              className={buttonVariants({
+                variant: "outline",
+                className: "min-h-11 px-4 text-base",
+              })}
+            >
+              Публичные результаты
+            </Link>
+          ) : null}
           <Link
             href={`/my-hackathons/${hackathon.id}/participants`}
             className={buttonVariants({

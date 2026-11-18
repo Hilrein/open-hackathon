@@ -147,4 +147,66 @@ export const submissionReviews = pgTable(
   ]
 );
 
+export const hackathonTeams = pgTable(
+  "hackathon_teams",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    hackathonId: uuid("hackathon_id")
+      .notNull()
+      .references(() => hackathons.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    captainId: text("captain_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    inviteCode: text("invite_code").notNull().unique(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [
+    uniqueIndex("hackathon_teams_hackathon_name_lower_uidx").on(
+      table.hackathonId,
+      sql`lower(${table.name})`
+    ),
+    index("hackathon_teams_hackathon_id_idx").on(table.hackathonId),
+    index("hackathon_teams_captain_id_idx").on(table.captainId),
+  ]
+);
+
+export const hackathonTeamMembers = pgTable(
+  "hackathon_team_members",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    hackathonId: uuid("hackathon_id")
+      .notNull()
+      .references(() => hackathons.id, { onDelete: "cascade" }),
+    teamId: uuid("team_id")
+      .notNull()
+      .references(() => hackathonTeams.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    joinedAt: timestamp("joined_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("hackathon_team_members_hackathon_user_uidx").on(
+      table.hackathonId,
+      table.userId
+    ),
+    uniqueIndex("hackathon_team_members_team_user_uidx").on(
+      table.teamId,
+      table.userId
+    ),
+    index("hackathon_team_members_team_id_idx").on(table.teamId),
+    index("hackathon_team_members_user_id_idx").on(table.userId),
+    index("hackathon_team_members_hackathon_id_idx").on(table.hackathonId),
+  ]
+);
+
 export * from "./auth-schema";

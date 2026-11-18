@@ -101,6 +101,7 @@ export type TeamDTO = {
   name: string;
   inviteCode: string;
   captainName: string;
+  viewerIsCaptain: boolean;
   memberCount: number;
   members: TeamMemberDTO[];
   createdAt: string;
@@ -179,7 +180,8 @@ async function getTeamMembership(hackathonId: string, userId: string) {
 
 async function buildTeamDTOById(
   hackathonSlug: string,
-  teamId: string
+  teamId: string,
+  viewerUserId: string
 ): Promise<TeamDTO | null> {
   const db = getDb();
   const teamRows = await db
@@ -220,6 +222,7 @@ async function buildTeamDTOById(
     name: team.name,
     inviteCode: team.inviteCode,
     captainName: captainMember?.name ?? "Участник",
+    viewerIsCaptain: team.captainId === viewerUserId,
     memberCount: members.length,
     members,
     createdAt: team.createdAt.toISOString(),
@@ -347,7 +350,7 @@ export async function createTeam(
       throw new TeamAlreadyMemberError();
     }
 
-    const dto = await buildTeamDTOById(hackathon.slug, createdTeamId);
+    const dto = await buildTeamDTOById(hackathon.slug, createdTeamId, userId);
     if (!dto) {
       throw new TeamError("Не удалось создать команду. Попробуйте позже.");
     }
@@ -438,6 +441,7 @@ export async function listTeams(
         name: team.name,
         inviteCode: team.inviteCode,
         captainName: captain?.name ?? "Участник",
+        viewerIsCaptain: team.captainId === userId,
         memberCount: members.length,
         members,
         createdAt: team.createdAt.toISOString(),
@@ -481,7 +485,7 @@ export async function getMyTeam(
       return null;
     }
 
-    return buildTeamDTOById(hackathon.slug, membership.teamId);
+    return buildTeamDTOById(hackathon.slug, membership.teamId, userId);
   } catch (error: unknown) {
     if (
       error instanceof TeamNotFoundError ||
@@ -566,7 +570,7 @@ export async function joinTeamByCode(
       throw new TeamAlreadyMemberError();
     }
 
-    const dto = await buildTeamDTOById(hackathon.slug, team.id);
+    const dto = await buildTeamDTOById(hackathon.slug, team.id, userId);
     if (!dto) {
       throw new TeamNotFoundError("Команда не найдена.");
     }

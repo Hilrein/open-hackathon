@@ -107,6 +107,17 @@ export function ParticipationItem({
             <FileCode2 className="size-4" aria-hidden="true" />
             {workLinkLabel}
           </Link>
+          <Link
+            href={`/my-participations/${hackathon.id}/team`}
+            className={buttonVariants({
+              variant: "outline",
+              size: "lg",
+              className: "min-h-11 w-full text-base",
+            })}
+          >
+            <Users className="size-4" aria-hidden="true" />
+            Команда
+          </Link>
           <ParticipateButton
             slug={hackathon.id}
             hackathonTitle={hackathon.title}

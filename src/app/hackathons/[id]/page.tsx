@@ -353,6 +353,16 @@ async function HackathonDetailContent({
                       ? "Сдать работу"
                       : "Ваша работа"}
                   </Link>
+
+                  <Link
+                    href={`/my-participations/${hackathon.id}/team`}
+                    className={cn(
+                      buttonVariants({ variant: "outline", size: "lg" }),
+                      "min-h-11 w-full text-base"
+                    )}
+                  >
+                    Команда
+                  </Link>
                 </div>
               ) : null}
             </CardContent>

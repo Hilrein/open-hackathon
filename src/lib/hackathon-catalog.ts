@@ -19,6 +19,8 @@ export interface HackathonCatalogParams {
   sort: HackathonCatalogSort;
 }
 
+export const CATALOG_PAGE_SIZE = 6;
+
 export const DEFAULT_HACKATHON_CATALOG_PARAMS: HackathonCatalogParams = {
   q: "",
   status: "all",
@@ -91,6 +93,44 @@ export function parseHackathonCatalogParams(
     format,
     sort,
   };
+}
+
+export function parseCatalogPage(raw: string | string[] | undefined): number {
+  const first = getFirstParamValue(raw)?.trim();
+  if (!first || !/^[1-9]\d*$/.test(first)) {
+    return 1;
+  }
+  const parsed = Number.parseInt(first, 10);
+  if (!Number.isSafeInteger(parsed) || parsed < 1) {
+    return 1;
+  }
+  return parsed;
+}
+
+export function buildCatalogSearchParams(
+  params: HackathonCatalogParams,
+  page: number
+): URLSearchParams {
+  const searchParams = new URLSearchParams();
+  const trimmedQ = params.q.trim();
+
+  if (trimmedQ.length > 0) {
+    searchParams.set("q", trimmedQ);
+  }
+  if (params.status !== DEFAULT_HACKATHON_CATALOG_PARAMS.status) {
+    searchParams.set("status", params.status);
+  }
+  if (params.format !== DEFAULT_HACKATHON_CATALOG_PARAMS.format) {
+    searchParams.set("format", params.format);
+  }
+  if (params.sort !== DEFAULT_HACKATHON_CATALOG_PARAMS.sort) {
+    searchParams.set("sort", params.sort);
+  }
+  if (Number.isInteger(page) && page > 1) {
+    searchParams.set("page", String(page));
+  }
+
+  return searchParams;
 }
 
 export function hasActiveCatalogParams(

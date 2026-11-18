@@ -6,13 +6,16 @@ import { HackathonCard } from "@/components/hackathon-card";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { getAllHackathons } from "@/db/queries";
 import {
-  filterHackathons,
+  buildCatalogSearchParams,
   hasActiveCatalogParams,
+  parseCatalogPage,
   parseHackathonCatalogParams,
-  sortHackathons,
 } from "@/lib/hackathon-catalog";
+import {
+  getHackathonsCatalogPage,
+  getTotalHackathonsCount,
+} from "@/lib/hackathon-catalog-query";
 import { cn } from "cn";
 
 export const metadata: Metadata = {
@@ -120,24 +123,37 @@ async function HackathonsCatalogContent({ searchParams }: HackathonsPageProps) {
   await connection();
   const rawParams = await searchParams;
   const params = parseHackathonCatalogParams(rawParams);
+  const requestedPage = parseCatalogPage(rawParams.page);
   const isFiltered = hasActiveCatalogParams(params);
 
-  let allHackathons;
+  let catalogPage;
+  let isDatabaseEmpty = false;
   try {
-    allHackathons = await getAllHackathons();
+    catalogPage = await getHackathonsCatalogPage(params, requestedPage);
+    if (catalogPage.total === 0) {
+      if (!isFiltered) {
+        isDatabaseEmpty = true;
+      } else {
+        const totalInDatabase = await getTotalHackathonsCount();
+        isDatabaseEmpty = totalInDatabase === 0;
+      }
+    }
   } catch (error: unknown) {
     const errorName = error instanceof Error ? error.name : "UnknownError";
     console.error(`Ошибка загрузки каталога хакатонов (${errorName}).`);
     return <DatabaseErrorState />;
   }
 
-  if (allHackathons.length === 0) {
+  if (isDatabaseEmpty) {
     return <EmptyDatabaseState />;
   }
 
-  const filtered = filterHackathons(allHackathons, params);
-  const results = sortHackathons(filtered, params.sort);
   const formKey = `${params.q}|${params.status}|${params.format}|${params.sort}`;
+
+  function buildPageHref(targetPage: number): string {
+    const queryString = buildCatalogSearchParams(params, targetPage).toString();
+    return queryString ? `/hackathons?${queryString}` : "/hackathons";
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -235,15 +251,72 @@ async function HackathonsCatalogContent({ searchParams }: HackathonsPageProps) {
       </form>
 
       <p className="text-base font-medium text-muted-foreground">
-        {formatFoundCount(results.length)}
+        {formatFoundCount(catalogPage.total)}
       </p>
 
-      {results.length > 0 ? (
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {results.map((hackathon) => (
-            <HackathonCard key={hackathon.id} hackathon={hackathon} />
-          ))}
-        </div>
+      {catalogPage.items.length > 0 ? (
+        <>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {catalogPage.items.map((hackathon) => (
+              <HackathonCard key={hackathon.id} hackathon={hackathon} />
+            ))}
+          </div>
+
+          {catalogPage.totalPages > 1 ? (
+            <nav
+              aria-label="Пагинация каталога"
+              className="flex flex-col items-center justify-between gap-3 border-t pt-6 sm:flex-row"
+            >
+              {catalogPage.page > 1 ? (
+                <Link
+                  href={buildPageHref(catalogPage.page - 1)}
+                  className={cn(
+                    buttonVariants({ variant: "outline", size: "lg" }),
+                    "min-h-11 w-full px-5 text-base sm:w-auto"
+                  )}
+                >
+                  Назад
+                </Link>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="lg"
+                  disabled
+                  className="min-h-11 w-full px-5 text-base sm:w-auto"
+                >
+                  Назад
+                </Button>
+              )}
+
+              <p className="text-sm font-medium text-muted-foreground sm:text-base">
+                Страница {catalogPage.page} из {catalogPage.totalPages}
+              </p>
+
+              {catalogPage.page < catalogPage.totalPages ? (
+                <Link
+                  href={buildPageHref(catalogPage.page + 1)}
+                  className={cn(
+                    buttonVariants({ variant: "outline", size: "lg" }),
+                    "min-h-11 w-full px-5 text-base sm:w-auto"
+                  )}
+                >
+                  Вперёд
+                </Link>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="lg"
+                  disabled
+                  className="min-h-11 w-full px-5 text-base sm:w-auto"
+                >
+                  Вперёд
+                </Button>
+              )}
+            </nav>
+          ) : null}
+        </>
       ) : (
         <NoMatchesState />
       )}

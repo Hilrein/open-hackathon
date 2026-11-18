@@ -1,8 +1,8 @@
 import { getDb } from "@/db";
 import { hackathons } from "@/db/schema";
 import { hackathonCreateSchema } from "@/lib/hackathon-create-schema";
+import { getHackathonEffectiveStatus } from "@/lib/hackathon-status";
 import { generateUniqueHackathonSlug } from "@/lib/slug";
-import type { HackathonStatus } from "@/types/hackathon";
 
 export class HackathonCreateValidationError extends Error {
   readonly fieldErrors: Record<string, string[] | undefined>;
@@ -22,20 +22,6 @@ export class HackathonCreateError extends Error {
     super(message);
     this.name = "HackathonCreateError";
   }
-}
-
-function computeHackathonStatus(
-  startDate: Date,
-  endDate: Date
-): HackathonStatus {
-  const now = Date.now();
-  if (endDate.getTime() <= now) {
-    return "finished";
-  }
-  if (startDate.getTime() <= now) {
-    return "active";
-  }
-  return "upcoming";
 }
 
 interface CreateHackathonForUserParams {
@@ -64,7 +50,7 @@ export async function createHackathonForUser({
   const data = parsed.data;
   const startDate = new Date(data.startDate);
   const endDate = new Date(data.endDate);
-  const status = computeHackathonStatus(startDate, endDate);
+  const status = getHackathonEffectiveStatus(startDate, endDate);
   const organizerName =
     data.organizerName && data.organizerName.length > 0
       ? data.organizerName

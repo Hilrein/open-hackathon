@@ -1,8 +1,8 @@
 import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { hackathons } from "@/db/schema";
+import { getHackathonEffectiveStatus } from "@/lib/hackathon-status";
 import { hackathonUpdateSchema } from "@/lib/hackathon-update-schema";
-import type { HackathonStatus } from "@/types/hackathon";
 
 export class HackathonUpdateValidationError extends Error {
   readonly fieldErrors: Record<string, string[] | undefined>;
@@ -36,20 +36,6 @@ export class HackathonUpdateError extends Error {
     super(message);
     this.name = "HackathonUpdateError";
   }
-}
-
-function computeHackathonStatus(
-  startDate: Date,
-  endDate: Date
-): HackathonStatus {
-  const now = Date.now();
-  if (endDate.getTime() <= now) {
-    return "finished";
-  }
-  if (startDate.getTime() <= now) {
-    return "active";
-  }
-  return "upcoming";
 }
 
 function normalizeTags(tags: string[] | undefined): string[] {
@@ -104,7 +90,7 @@ export async function updateHackathonForUser({
   const data = parsed.data;
   const startDate = new Date(data.startDate);
   const endDate = new Date(data.endDate);
-  const status = computeHackathonStatus(startDate, endDate);
+  const status = getHackathonEffectiveStatus(startDate, endDate);
 
   const organizerName =
     data.organizerName && data.organizerName.length > 0

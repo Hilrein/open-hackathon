@@ -5,7 +5,6 @@ import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { Plus } from "lucide-react";
 import { HackathonManageItem } from "@/components/hackathon-manage-item";
-import { AppShell } from "@/components/layout/app-shell";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { getHackathonsByOrganizer } from "@/db/queries";
@@ -112,32 +111,30 @@ async function MyHackathonsContent() {
 
 export default function MyHackathonsPage() {
   return (
-    <AppShell>
-      <main className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6 sm:py-10">
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-1.5">
-            <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-              Мои хакатоны
-            </h1>
-            <p className="text-base text-muted-foreground">
-              Здесь собраны хакатоны, которые вы создали.
-            </p>
-          </div>
-          <Link
-            href="/create"
-            className={buttonVariants({
-              className: "min-h-11 shrink-0 px-5 text-base",
-            })}
-          >
-            <Plus className="size-4" aria-hidden="true" />
-            Создать хакатон
-          </Link>
+    <div className="mx-auto w-full max-w-4xl">
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="space-y-1.5">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+            Мои хакатоны
+          </h1>
+          <p className="text-base text-muted-foreground">
+            Здесь собраны хакатоны, которые вы создали.
+          </p>
         </div>
+        <Link
+          href="/create"
+          className={buttonVariants({
+            className: "min-h-11 shrink-0 px-5 text-base",
+          })}
+        >
+          <Plus className="size-4" aria-hidden="true" />
+          Создать хакатон
+        </Link>
+      </div>
 
-        <Suspense fallback={<MyHackathonsSkeleton />}>
-          <MyHackathonsContent />
-        </Suspense>
-      </main>
-    </AppShell>
+      <Suspense fallback={<MyHackathonsSkeleton />}>
+        <MyHackathonsContent />
+      </Suspense>
+    </div>
   );
 }

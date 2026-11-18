@@ -66,6 +66,16 @@ export function UserMenu({ onAction, fullWidthOnMobile = false }: UserMenuProps)
       )}
     >
       <Link
+        href="/my-participations"
+        onClick={() => onAction?.()}
+        className={buttonVariants({
+          variant: "ghost",
+          className: "min-h-11 px-3 text-base",
+        })}
+      >
+        Мои участия
+      </Link>
+      <Link
         href="/my-hackathons"
         onClick={() => onAction?.()}
         className={buttonVariants({

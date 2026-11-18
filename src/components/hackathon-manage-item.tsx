@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Calendar, MapPin, Pencil, Trash2, Users } from "lucide-react";
+import { Calendar, FileCode2, MapPin, Pencil, Trash2, Users } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -144,6 +144,26 @@ export function HackathonManageItem({ hackathon }: HackathonManageItemProps) {
               })}
             >
               Открыть
+            </Link>
+            <Link
+              href={`/my-hackathons/${hackathon.id}/participants`}
+              className={buttonVariants({
+                variant: "outline",
+                className: "min-h-11 px-4 text-base",
+              })}
+            >
+              <Users className="size-4" aria-hidden="true" />
+              Участники
+            </Link>
+            <Link
+              href={`/my-hackathons/${hackathon.id}/submissions`}
+              className={buttonVariants({
+                variant: "outline",
+                className: "min-h-11 px-4 text-base",
+              })}
+            >
+              <FileCode2 className="size-4" aria-hidden="true" />
+              Работы
             </Link>
             <Link
               href={`/my-hackathons/${hackathon.id}/edit`}

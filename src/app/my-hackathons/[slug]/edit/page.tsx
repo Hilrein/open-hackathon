@@ -4,7 +4,6 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { CreateHackathonWizard } from "@/components/create-hackathon-wizard";
-import { AppShell } from "@/components/layout/app-shell";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { getHackathonWithOwnerBySlug } from "@/db/queries";
@@ -156,12 +155,8 @@ export default function EditHackathonPage(props: {
   params: Promise<{ slug: string }>;
 }) {
   return (
-    <AppShell>
-      <main className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6 sm:py-10">
-        <Suspense fallback={<EditHackathonSkeleton />}>
-          <EditHackathonContent params={props.params} />
-        </Suspense>
-      </main>
-    </AppShell>
+    <Suspense fallback={<EditHackathonSkeleton />}>
+      <EditHackathonContent params={props.params} />
+    </Suspense>
   );
 }

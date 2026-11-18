@@ -7,7 +7,12 @@ import { ParticipateButton } from "@/components/participate-button";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getHackathonBySlug } from "@/db/queries";
+import {
+  getHackathonBySlug,
+  getHackathonParticipationContext,
+} from "@/db/queries";
+import { getOwnSubmission } from "@/lib/hackathon-submissions";
+import { getSession } from "@/lib/session";
 import {
   HACKATHON_FORMAT_CONFIG,
   HACKATHON_STATUS_CONFIG,
@@ -24,6 +29,10 @@ interface HackathonDetailPageProps {
 const getCachedHackathonBySlug = cache(async (slug: string) => {
   return getHackathonBySlug(slug);
 });
+
+function isHackathonFinished(endDateIso: string): boolean {
+  return Date.parse(endDateIso) <= Date.now();
+}
 
 export async function generateMetadata({
   params,
@@ -110,8 +119,28 @@ async function HackathonDetailContent({
   const { id } = await params;
 
   let hackathon;
+  let session;
+  let participationContext;
+  let ownSubmission: Awaited<ReturnType<typeof getOwnSubmission>> = null;
   try {
-    hackathon = await getCachedHackathonBySlug(id);
+    [hackathon, session] = await Promise.all([
+      getCachedHackathonBySlug(id),
+      getSession(),
+    ]);
+
+    if (hackathon) {
+      participationContext = await getHackathonParticipationContext(
+        id,
+        session?.user.id ?? null
+      );
+      if (
+        session &&
+        participationContext?.isParticipating &&
+        participationContext.organizerId !== session.user.id
+      ) {
+        ownSubmission = await getOwnSubmission(id, session.user.id);
+      }
+    }
   } catch (error: unknown) {
     const errorName = error instanceof Error ? error.name : "UnknownError";
     console.error(`Ошибка при загрузке хакатона из базы (${errorName}).`);
@@ -121,6 +150,18 @@ async function HackathonDetailContent({
   if (!hackathon) {
     return <HackathonNotFound />;
   }
+
+  const isAuthenticated = Boolean(session);
+  const isOrganizer = Boolean(
+    session &&
+      participationContext?.organizerId &&
+      participationContext.organizerId === session.user.id
+  );
+  const isFinished = isHackathonFinished(hackathon.endDate);
+  const isFull =
+    hackathon.maxParticipants !== undefined &&
+    hackathon.participantsCount >= hackathon.maxParticipants;
+  const initialParticipating = participationContext?.isParticipating ?? false;
 
   const statusInfo = HACKATHON_STATUS_CONFIG[hackathon.status];
   const formatInfo = HACKATHON_FORMAT_CONFIG[hackathon.format];
@@ -252,14 +293,56 @@ async function HackathonDetailContent({
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
               <p className="text-base text-muted-foreground">
-                {hackathon.status === "finished"
+                {isFinished
                   ? "Этот хакатон уже завершился."
                   : "Подайте заявку, чтобы принять участие в хакатоне."}
               </p>
               <ParticipateButton
-                status={hackathon.status}
-                title={hackathon.title}
+                slug={hackathon.id}
+                hackathonTitle={hackathon.title}
+                isAuthenticated={isAuthenticated}
+                isOrganizer={isOrganizer}
+                isFinished={isFinished}
+                isFull={isFull}
+                initialParticipating={initialParticipating}
+                initialParticipantsCount={hackathon.participantsCount}
               />
+
+              {initialParticipating && !isOrganizer ? (
+                <div className="flex flex-col gap-2.5 border-t pt-4">
+                  {ownSubmission ? (
+                    <p className="text-sm font-medium text-foreground">
+                      Работа сдана.
+                    </p>
+                  ) : hackathon.status === "active" ? (
+                    <p className="text-sm text-muted-foreground">
+                      Вы участвуете. Сдайте работу до окончания хакатона.
+                    </p>
+                  ) : hackathon.status === "upcoming" ? (
+                    <p className="text-sm text-muted-foreground">
+                      Работу можно будет сдать после старта хакатона.
+                    </p>
+                  ) : null}
+
+                  <Link
+                    href={`/my-participations/${hackathon.id}/work`}
+                    className={cn(
+                      buttonVariants({
+                        variant:
+                          !ownSubmission && hackathon.status === "active"
+                            ? "default"
+                            : "outline",
+                        size: "lg",
+                      }),
+                      "min-h-11 w-full text-base"
+                    )}
+                  >
+                    {!ownSubmission && hackathon.status === "active"
+                      ? "Сдать работу"
+                      : "Ваша работа"}
+                  </Link>
+                </div>
+              ) : null}
             </CardContent>
           </Card>
         </aside>

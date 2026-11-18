@@ -40,3 +40,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# build & logs
+.turbo
+*.log
+
+# temporary cookies
+cookies.txt
+*-cookies.txt
+auth-cookies.txt

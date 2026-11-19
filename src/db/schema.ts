@@ -93,6 +93,9 @@ export const hackathonSubmissions = pgTable(
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
+    teamId: uuid("team_id").references(() => hackathonTeams.id, {
+      onDelete: "cascade",
+    }),
     title: text("title").notNull(),
     description: text("description").notNull(),
     repoUrl: text("repo_url"),
@@ -106,10 +109,13 @@ export const hackathonSubmissions = pgTable(
       .$onUpdate(() => new Date()),
   },
   (table) => [
-    uniqueIndex("hackathon_submissions_hackathon_user_uidx").on(
-      table.hackathonId,
-      table.userId
-    ),
+    uniqueIndex("hackathon_submissions_hackathon_user_solo_uidx")
+      .on(table.hackathonId, table.userId)
+      .where(sql`${table.teamId} IS NULL`),
+    uniqueIndex("hackathon_submissions_hackathon_team_uidx")
+      .on(table.hackathonId, table.teamId)
+      .where(sql`${table.teamId} IS NOT NULL`),
+    index("hackathon_submissions_team_id_idx").on(table.teamId),
     index("hackathon_submissions_hackathon_id_idx").on(table.hackathonId),
     index("hackathon_submissions_user_id_idx").on(table.userId),
   ]

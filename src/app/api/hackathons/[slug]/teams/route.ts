@@ -4,6 +4,7 @@ import {
   TeamAlreadyMemberError,
   TeamFinishedError,
   TeamForbiddenError,
+  TeamHasIndividualSubmissionError,
   TeamNameConflictError,
   TeamNotFoundError,
   TeamNotParticipantError,
@@ -107,7 +108,8 @@ export async function POST(
     }
     if (
       error instanceof TeamAlreadyMemberError ||
-      error instanceof TeamNameConflictError
+      error instanceof TeamNameConflictError ||
+      error instanceof TeamHasIndividualSubmissionError
     ) {
       return NextResponse.json({ error: error.message }, { status: 409 });
     }

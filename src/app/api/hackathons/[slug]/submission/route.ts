@@ -108,7 +108,7 @@ export async function PUT(
 
     if (error instanceof SubmissionForbiddenError) {
       return NextResponse.json(
-        { error: "Сначала присоединитесь к хакатону." },
+        { error: error.message },
         { status: 403 }
       );
     }
@@ -195,6 +195,13 @@ export async function DELETE(
       return NextResponse.json(
         { error: "Хакатон уже завершён. Отозвать работу нельзя." },
         { status: 400 }
+      );
+    }
+
+    if (error instanceof SubmissionForbiddenError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 403 }
       );
     }
 

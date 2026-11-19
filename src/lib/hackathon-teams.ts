@@ -1,9 +1,10 @@
 import { randomInt } from "node:crypto";
-import { and, asc, eq, sql } from "drizzle-orm";
+import { and, asc, eq, isNull, sql } from "drizzle-orm";
 import { getDb } from "@/db";
 import {
   hackathonParticipants,
   hackathons,
+  hackathonSubmissions,
   hackathonTeamMembers,
   hackathonTeams,
   user,
@@ -56,6 +57,15 @@ export class TeamNameConflictError extends Error {
   constructor(message = "Команда с таким названием уже существует.") {
     super(message);
     this.name = "TeamNameConflictError";
+  }
+}
+
+export class TeamHasIndividualSubmissionError extends Error {
+  constructor(
+    message = "Сначала отзовите личную работу, чтобы продолжить."
+  ) {
+    super(message);
+    this.name = "TeamHasIndividualSubmissionError";
   }
 }
 
@@ -178,6 +188,25 @@ async function getTeamMembership(hackathonId: string, userId: string) {
   return rows[0] ?? null;
 }
 
+async function hasIndividualSubmission(
+  hackathonId: string,
+  userId: string
+): Promise<boolean> {
+  const db = getDb();
+  const rows = await db
+    .select({ id: hackathonSubmissions.id })
+    .from(hackathonSubmissions)
+    .where(
+      and(
+        eq(hackathonSubmissions.hackathonId, hackathonId),
+        eq(hackathonSubmissions.userId, userId),
+        isNull(hackathonSubmissions.teamId)
+      )
+    )
+    .limit(1);
+  return rows.length > 0;
+}
+
 async function buildTeamDTOById(
   hackathonSlug: string,
   teamId: string,
@@ -253,6 +282,12 @@ export async function createTeam(
     const existingMembership = await getTeamMembership(hackathon.id, userId);
     if (existingMembership) {
       throw new TeamAlreadyMemberError();
+    }
+
+    if (await hasIndividualSubmission(hackathon.id, userId)) {
+      throw new TeamHasIndividualSubmissionError(
+        "Сначала отзовите личную работу, чтобы создать команду."
+      );
     }
 
     const parsed = createTeamSchema.safeParse(input);
@@ -362,6 +397,7 @@ export async function createTeam(
       error instanceof TeamNotParticipantError ||
       error instanceof TeamAlreadyMemberError ||
       error instanceof TeamNameConflictError ||
+      error instanceof TeamHasIndividualSubmissionError ||
       error instanceof TeamValidationError ||
       error instanceof TeamError
     ) {
@@ -526,6 +562,12 @@ export async function joinTeamByCode(
       throw new TeamAlreadyMemberError();
     }
 
+    if (await hasIndividualSubmission(hackathon.id, userId)) {
+      throw new TeamHasIndividualSubmissionError(
+        "Сначала отзовите личную работу, чтобы войти в команду."
+      );
+    }
+
     const parsed = joinTeamSchema.safeParse(input);
     if (!parsed.success) {
       throw new TeamValidationError(
@@ -581,6 +623,7 @@ export async function joinTeamByCode(
       error instanceof TeamFinishedError ||
       error instanceof TeamNotParticipantError ||
       error instanceof TeamAlreadyMemberError ||
+      error instanceof TeamHasIndividualSubmissionError ||
       error instanceof TeamValidationError ||
       error instanceof TeamError
     ) {

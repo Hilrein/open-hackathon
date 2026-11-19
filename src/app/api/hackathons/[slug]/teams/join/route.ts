@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import {
   TeamAlreadyMemberError,
   TeamFinishedError,
+  TeamHasIndividualSubmissionError,
   TeamNotFoundError,
   TeamNotParticipantError,
   TeamValidationError,
@@ -61,7 +62,10 @@ export async function POST(
     if (error instanceof TeamNotParticipantError) {
       return NextResponse.json({ error: error.message }, { status: 403 });
     }
-    if (error instanceof TeamAlreadyMemberError) {
+    if (
+      error instanceof TeamAlreadyMemberError ||
+      error instanceof TeamHasIndividualSubmissionError
+    ) {
       return NextResponse.json({ error: error.message }, { status: 409 });
     }
 

@@ -57,6 +57,13 @@
       "when": 1795038074802,
       "tag": "0007_strange_franklin_storm",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1795122657842,
+      "tag": "0008_cynical_electro",
+      "breakpoints": true
     }
   ]
 }

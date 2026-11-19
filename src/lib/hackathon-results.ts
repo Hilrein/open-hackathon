@@ -4,6 +4,7 @@ import { mapHackathonRowToHackathon } from "@/db/queries";
 import {
   hackathons,
   hackathonSubmissions,
+  hackathonTeams,
   submissionReviews,
   user,
 } from "@/db/schema";
@@ -14,6 +15,7 @@ export type PublicResultItem = {
   submissionId: string;
   title: string;
   authorName: string;
+  teamName: string | null;
   repoUrl: string | null;
   demoUrl: string | null;
   score: number;
@@ -55,6 +57,7 @@ export async function getHackathonPublicResults(
       score: submissionReviews.score,
       reviewedAt: submissionReviews.updatedAt,
       authorName: user.name,
+      teamName: hackathonTeams.name,
     })
     .from(hackathonSubmissions)
     .innerJoin(
@@ -62,6 +65,10 @@ export async function getHackathonPublicResults(
       eq(submissionReviews.submissionId, hackathonSubmissions.id)
     )
     .innerJoin(user, eq(hackathonSubmissions.userId, user.id))
+    .leftJoin(
+      hackathonTeams,
+      eq(hackathonSubmissions.teamId, hackathonTeams.id)
+    )
     .where(eq(hackathonSubmissions.hackathonId, hackathonRow.id))
     .orderBy(desc(submissionReviews.score), asc(hackathonSubmissions.createdAt));
 
@@ -74,12 +81,20 @@ export async function getHackathonPublicResults(
       previousScore = row.score;
     }
 
-    const cleanName = row.authorName?.trim();
+    const cleanTeamName = row.teamName?.trim() || null;
+    const cleanAuthorName = row.authorName?.trim();
+    const displayAuthor =
+      cleanTeamName ??
+      (cleanAuthorName && cleanAuthorName.length > 0
+        ? cleanAuthorName
+        : "Участник");
+
     return {
       place: currentPlace,
       submissionId: row.submissionId,
       title: row.title,
-      authorName: cleanName && cleanName.length > 0 ? cleanName : "Участник",
+      authorName: displayAuthor,
+      teamName: cleanTeamName,
       repoUrl: row.repoUrl,
       demoUrl: row.demoUrl,
       score: row.score,

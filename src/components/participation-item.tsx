@@ -42,10 +42,7 @@ export function ParticipationItem({
   const isFull =
     hackathon.maxParticipants !== undefined &&
     hackathon.participantsCount >= hackathon.maxParticipants;
-  const workLinkLabel =
-    !hasSubmission && hackathon.status === "active"
-      ? "Сдать работу"
-      : "Ваша работа";
+  const workLinkLabel = "Работа";
 
   return (
     <Card>

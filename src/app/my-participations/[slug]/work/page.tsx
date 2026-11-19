@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
-import { ArrowLeft, Calendar, ExternalLink } from "lucide-react";
+import { ArrowLeft, Calendar, ExternalLink, UsersRound } from "lucide-react";
 import { SubmissionForm } from "@/components/submission-form";
 import { SubmissionReviewView } from "@/components/submission-review-view";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +15,7 @@ import {
   formatHackathonDateRange,
 } from "@/lib/hackathon-formatters";
 import { getOwnSubmission } from "@/lib/hackathon-submissions";
+import { getMyTeam } from "@/lib/hackathon-teams";
 import { getSession } from "@/lib/session";
 
 export const metadata: Metadata = {
@@ -64,12 +65,16 @@ async function HackathonWorkContent({ params }: HackathonWorkContentProps) {
   let context: Awaited<ReturnType<typeof getHackathonWorkContext>> | null =
     null;
   let ownSubmission: Awaited<ReturnType<typeof getOwnSubmission>> = null;
+  let myTeam: Awaited<ReturnType<typeof getMyTeam>> = null;
   let hasError = false;
 
   try {
     context = await getHackathonWorkContext(slug, session.user.id);
     if (context.kind === "ok") {
-      ownSubmission = await getOwnSubmission(slug, session.user.id);
+      [ownSubmission, myTeam] = await Promise.all([
+        getOwnSubmission(slug, session.user.id),
+        getMyTeam(slug, session.user.id),
+      ]);
     }
   } catch {
     hasError = true;
@@ -159,6 +164,17 @@ async function HackathonWorkContent({ params }: HackathonWorkContentProps) {
     ? formatRussianDate(ownSubmission.updatedAt)
     : "";
 
+  const isInTeam = Boolean(myTeam);
+  const viewerIsCaptain = myTeam?.viewerIsCaptain ?? false;
+  const teamName = myTeam?.name ?? null;
+  const captainName = myTeam?.captainName ?? null;
+  const canEdit = ownSubmission
+    ? ownSubmission.canEdit
+    : hackathon.status === "active" && (!isInTeam || viewerIsCaptain);
+
+  const waitingForCaptainSubmission =
+    !ownSubmission && isInTeam && !viewerIsCaptain;
+
   return (
     <div className="mx-auto w-full max-w-2xl space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -172,16 +188,28 @@ async function HackathonWorkContent({ params }: HackathonWorkContentProps) {
           <ArrowLeft className="size-4" aria-hidden="true" />
           Назад в мои участия
         </Link>
-        <Link
-          href={hackathonUrl}
-          className={buttonVariants({
-            variant: "outline",
-            className: "min-h-11 px-4 text-base",
-          })}
-        >
-          <ExternalLink className="size-4" aria-hidden="true" />
-          Открыть хакатон
-        </Link>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <Link
+            href={`/my-participations/${hackathon.id}/team`}
+            className={buttonVariants({
+              variant: "outline",
+              className: "min-h-11 px-4 text-base",
+            })}
+          >
+            <UsersRound className="size-4" aria-hidden="true" />
+            Команда
+          </Link>
+          <Link
+            href={hackathonUrl}
+            className={buttonVariants({
+              variant: "outline",
+              className: "min-h-11 px-4 text-base",
+            })}
+          >
+            <ExternalLink className="size-4" aria-hidden="true" />
+            Открыть хакатон
+          </Link>
+        </div>
       </div>
 
       <div className="space-y-3">
@@ -196,7 +224,7 @@ async function HackathonWorkContent({ params }: HackathonWorkContentProps) {
         </div>
 
         <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-          Ваша работа
+          {isInTeam ? "Работа команды" : "Ваша работа"}
         </h1>
 
         <p className="text-base text-muted-foreground">
@@ -208,19 +236,47 @@ async function HackathonWorkContent({ params }: HackathonWorkContentProps) {
           </Link>
         </p>
 
-        <p className="text-sm font-medium text-muted-foreground">
-          {ownSubmission
-            ? `Работа сдана.${updatedLabel ? ` Обновлено ${updatedLabel}.` : ""}`
-            : "Работа пока не сдана."}
-        </p>
+        {isInTeam && teamName ? (
+          <p className="text-sm font-medium text-foreground">
+            {viewerIsCaptain
+              ? `Команда «${teamName}». Вы капитан, вы сдаёте работу.`
+              : `Команда «${teamName}». Работу сдаёт капитан ${captainName ?? ""}.`}
+          </p>
+        ) : null}
+
+        {!waitingForCaptainSubmission ? (
+          <p className="text-sm font-medium text-muted-foreground">
+            {ownSubmission
+              ? `Работа сдана.${updatedLabel ? ` Обновлено ${updatedLabel}.` : ""}`
+              : "Работа пока не сдана."}
+          </p>
+        ) : null}
       </div>
 
-      <SubmissionForm
-        slug={hackathon.id}
-        hackathonTitle={hackathon.title}
-        status={hackathon.status}
-        initialSubmission={ownSubmission}
-      />
+      {waitingForCaptainSubmission ? (
+        <Card>
+          <CardContent className="space-y-2 p-6 text-center sm:p-8">
+            <h2 className="text-xl font-semibold text-foreground">
+              Капитан ещё не сдал работу команды.
+            </h2>
+            <p className="mx-auto max-w-md text-base text-muted-foreground">
+              Когда капитан сдаст работу, вы увидите её здесь.
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <SubmissionForm
+          slug={hackathon.id}
+          hackathonTitle={hackathon.title}
+          status={hackathon.status}
+          initialSubmission={ownSubmission}
+          isInTeam={isInTeam}
+          viewerIsCaptain={viewerIsCaptain}
+          teamName={teamName}
+          captainName={captainName}
+          canEdit={canEdit}
+        />
+      )}
 
       <SubmissionReviewView
         review={ownSubmission?.review ?? null}

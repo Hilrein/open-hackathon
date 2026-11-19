@@ -28,6 +28,11 @@ interface SubmissionFormProps {
   hackathonTitle: string;
   status: HackathonStatus;
   initialSubmission: SubmissionDTO | null;
+  isInTeam: boolean;
+  viewerIsCaptain: boolean;
+  teamName: string | null;
+  captainName: string | null;
+  canEdit: boolean;
 }
 
 type SubmissionFieldName = "title" | "description" | "repoUrl" | "demoUrl";
@@ -53,6 +58,11 @@ export function SubmissionForm({
   hackathonTitle,
   status,
   initialSubmission,
+  isInTeam,
+  viewerIsCaptain,
+  teamName,
+  captainName,
+  canEdit,
 }: SubmissionFormProps) {
   const router = useRouter();
   const [submission, setSubmission] = useState<SubmissionDTO | null>(
@@ -72,13 +82,21 @@ export function SubmissionForm({
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [isWithdrawDialogOpen, setIsWithdrawDialogOpen] = useState(false);
 
-  const isActive = status === "active";
-  const isFinished = status === "finished";
-  const isReadOnly = !isActive;
+  const isReadOnly = !canEdit;
   const isBusy = isSaving || isWithdrawing;
   const redirectToSignInUrl = `/sign-in?redirect=${encodeURIComponent(
     `/my-participations/${slug}/work`
   )}`;
+
+  const alertMessage = canEdit
+    ? isInTeam && teamName
+      ? `Это работа команды «${teamName}». Она одна на всю команду.`
+      : STATUS_HINT_MAP[status]
+    : isInTeam && !viewerIsCaptain
+      ? `Работу команды сдаёт капитан ${captainName ?? ""}. Вы можете смотреть работу.`
+      : status === "upcoming"
+        ? STATUS_HINT_MAP.upcoming
+        : STATUS_HINT_MAP.finished;
 
   function clearFieldError(field: SubmissionFieldName) {
     if (fieldErrors[field]) {
@@ -98,7 +116,7 @@ export function SubmissionForm({
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!isActive || isBusy) {
+    if (!canEdit || isBusy) {
       return;
     }
 
@@ -184,7 +202,8 @@ export function SubmissionForm({
           : undefined;
 
       if (response.status === 403) {
-        setErrorMessage(serverError || "Сначала присоединитесь к хакатону.");
+        setErrorMessage(serverError || "Работу команды сдаёт капитан.");
+        router.refresh();
         return;
       }
 
@@ -228,7 +247,7 @@ export function SubmissionForm({
   }
 
   async function handleWithdraw() {
-    if (isFinished || !submission || isBusy) {
+    if (!canEdit || !submission || isBusy) {
       return;
     }
 
@@ -280,7 +299,8 @@ export function SubmissionForm({
       setIsWithdrawDialogOpen(false);
 
       if (response.status === 403) {
-        setErrorMessage(serverError || "Сначала присоединитесь к хакатону.");
+        setErrorMessage(serverError || "Работу команды сдаёт капитан.");
+        router.refresh();
         return;
       }
 
@@ -319,7 +339,7 @@ export function SubmissionForm({
           <Info className="size-4" aria-hidden="true" />
         )}
         <AlertDescription className="text-sm sm:text-base">
-          {STATUS_HINT_MAP[status]}
+          {alertMessage}
           {isReadOnly ? " Поля открыты только для чтения." : ""}
         </AlertDescription>
       </Alert>
@@ -509,26 +529,24 @@ export function SubmissionForm({
               )}
             </div>
 
-            {(isActive || (submission && !isFinished)) ? (
+            {canEdit ? (
               <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">
-                {isActive ? (
-                  <Button
-                    type="submit"
-                    size="lg"
-                    disabled={isBusy}
-                    className="min-h-11 px-6 text-base"
-                  >
-                    {isSaving
-                      ? "Сохраняем..."
-                      : submission
-                        ? "Сохранить изменения"
+                <Button
+                  type="submit"
+                  size="lg"
+                  disabled={isBusy}
+                  className="min-h-11 px-6 text-base"
+                >
+                  {isSaving
+                    ? "Сохраняем..."
+                    : submission
+                      ? "Сохранить изменения"
+                      : isInTeam
+                        ? "Сдать работу команды"
                         : "Сдать работу"}
-                  </Button>
-                ) : (
-                  <div />
-                )}
+                </Button>
 
-                {submission && !isFinished ? (
+                {submission ? (
                   <Button
                     type="button"
                     variant="destructive"
@@ -557,10 +575,13 @@ export function SubmissionForm({
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Отозвать работу?</AlertDialogTitle>
+            <AlertDialogTitle>
+              {isInTeam ? "Отозвать работу команды?" : "Отозвать работу?"}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Работа «{submission?.title ?? hackathonTitle}» будет удалена. Вы
-              сможете сдать её снова, пока хакатон идёт.
+              {isInTeam
+                ? `Работа команды «${teamName ?? ""}» будет удалена. Все участники команды потеряют доступ к ней. Вы сможете сдать работу снова, пока хакатон идёт.`
+                : `Работа «${submission?.title ?? hackathonTitle}» будет удалена. Вы сможете сдать её снова, пока хакатон идёт.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

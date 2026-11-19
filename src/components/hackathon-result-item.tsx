@@ -59,10 +59,17 @@ export function HackathonResultItem({ item }: HackathonResultItemProps) {
           {item.title}
         </CardTitle>
 
-        <p className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
-          <User className="size-4 shrink-0" aria-hidden="true" />
-          <span>{item.authorName}</span>
-        </p>
+        <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+          <span className="inline-flex items-center gap-1.5">
+            <User className="size-4 shrink-0" aria-hidden="true" />
+            <span>{item.authorName}</span>
+          </span>
+          {item.teamName !== null ? (
+            <Badge variant="outline" className="px-2 py-0.5 text-xs">
+              Команда
+            </Badge>
+          ) : null}
+        </div>
       </CardHeader>
 
       <Separator />

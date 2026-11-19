@@ -1,5 +1,6 @@
-import { Calendar, ExternalLink, Mail, User } from "lucide-react";
+import { Calendar, ExternalLink, Mail, User, UsersRound } from "lucide-react";
 import { SubmissionReviewForm } from "@/components/submission-review-form";
+import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -53,6 +54,23 @@ export function SubmissionItem({
   return (
     <Card>
       <CardHeader className="gap-3 pb-4">
+        {submission.isTeamSubmission ? (
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="secondary" className="gap-1.5 px-2.5 py-0.5 text-xs">
+              <UsersRound className="size-3.5" aria-hidden="true" />
+              Команда
+            </Badge>
+            {submission.teamName ? (
+              <span className="text-sm font-semibold text-foreground">
+                {submission.teamName}
+              </span>
+            ) : null}
+            <span className="text-xs text-muted-foreground">
+              Работа команды. Сдал капитан.
+            </span>
+          </div>
+        ) : null}
+
         <CardTitle className="text-xl font-bold leading-snug text-foreground">
           {submission.title}
         </CardTitle>

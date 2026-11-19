@@ -328,7 +328,8 @@ async function HackathonDetailContent({
                     </p>
                   ) : hackathon.status === "active" ? (
                     <p className="text-sm text-muted-foreground">
-                      Вы участвуете. Сдайте работу до окончания хакатона.
+                      Работа доступна на странице работы. В команде её сдаёт
+                      капитан.
                     </p>
                   ) : hackathon.status === "upcoming" ? (
                     <p className="text-sm text-muted-foreground">
@@ -349,9 +350,7 @@ async function HackathonDetailContent({
                       "min-h-11 w-full text-base"
                     )}
                   >
-                    {!ownSubmission && hackathon.status === "active"
-                      ? "Сдать работу"
-                      : "Ваша работа"}
+                    Работа
                   </Link>
 
                   <Link

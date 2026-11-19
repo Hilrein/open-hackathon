@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Calendar,
@@ -8,6 +9,7 @@ import {
   CheckCircle2,
   Copy,
   Crown,
+  FileCode2,
   LogOut,
   Trash2,
   Users,
@@ -24,7 +26,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -74,6 +76,7 @@ export function TeamPanel({
   const router = useRouter();
   const [team, setTeam] = useState<TeamDTO | null>(initialTeam);
   const [error, setError] = useState<string | null>(null);
+  const [showWorkLinkOnError, setShowWorkLinkOnError] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const [pending, setPending] = useState<
     "create" | "join" | "leave" | "disband" | null
@@ -119,6 +122,7 @@ export function TeamPanel({
     }
 
     setError(null);
+    setShowWorkLinkOnError(false);
     setSuccess(null);
 
     const parsed = createTeamSchema.safeParse({ name: teamName });
@@ -196,6 +200,7 @@ export function TeamPanel({
         setError(
           serverError || "Вы уже состоите в команде или название занято."
         );
+        setShowWorkLinkOnError(true);
         router.refresh();
         return;
       }
@@ -217,6 +222,7 @@ export function TeamPanel({
     }
 
     setError(null);
+    setShowWorkLinkOnError(false);
     setSuccess(null);
 
     const parsed = joinTeamSchema.safeParse({ inviteCode });
@@ -294,6 +300,7 @@ export function TeamPanel({
         setError(
           serverError || "Вы уже состоите в команде или название занято."
         );
+        setShowWorkLinkOnError(true);
         router.refresh();
         return;
       }
@@ -314,6 +321,7 @@ export function TeamPanel({
     }
 
     setError(null);
+    setShowWorkLinkOnError(false);
     setSuccess(null);
     setPending("leave");
 
@@ -389,6 +397,7 @@ export function TeamPanel({
     }
 
     setError(null);
+    setShowWorkLinkOnError(false);
     setSuccess(null);
     setPending("disband");
 
@@ -476,8 +485,18 @@ export function TeamPanel({
 
       {error ? (
         <Alert variant="destructive" role="alert">
-          <AlertDescription className="text-sm sm:text-base">
-            {error}
+          <AlertDescription className="flex flex-col gap-2 text-sm sm:text-base">
+            <span>{error}</span>
+            {showWorkLinkOnError ? (
+              <div>
+                <Link
+                  href={`/my-participations/${slug}/work`}
+                  className="font-medium underline underline-offset-4 hover:opacity-80"
+                >
+                  Перейти к работе
+                </Link>
+              </div>
+            ) : null}
           </AlertDescription>
         </Alert>
       ) : null}
@@ -492,8 +511,9 @@ export function TeamPanel({
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <Card>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <Card>
               <CardHeader>
                 <CardTitle className="text-xl">Создать команду</CardTitle>
                 <CardDescription className="text-sm sm:text-base">
@@ -624,6 +644,11 @@ export function TeamPanel({
                 </form>
               </CardContent>
             </Card>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Если вы уже сдали личную работу, сначала отзовите её — иначе войти
+              в команду не получится.
+            </p>
           </div>
         )
       ) : (
@@ -735,40 +760,51 @@ export function TeamPanel({
               </ul>
             </div>
 
-            {!isFinished ? (
-              <>
-                <Separator />
-                <div className="flex flex-wrap items-center justify-end gap-3">
-                  {team.viewerIsCaptain ? (
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="lg"
-                      disabled={isBusy}
-                      onClick={() => setIsDisbandDialogOpen(true)}
-                      className="min-h-11 px-5 text-base"
-                    >
-                      <Trash2 className="size-4" aria-hidden="true" />
-                      {pending === "disband"
-                        ? "Распускаем..."
-                        : "Распустить команду"}
-                    </Button>
-                  ) : (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="lg"
-                      disabled={isBusy}
-                      onClick={() => setIsLeaveDialogOpen(true)}
-                      className="min-h-11 px-5 text-base"
-                    >
-                      <LogOut className="size-4" aria-hidden="true" />
-                      {pending === "leave" ? "Выходим..." : "Покинуть команду"}
-                    </Button>
-                  )}
-                </div>
-              </>
-            ) : null}
+            <Separator />
+
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <Link
+                href={`/my-participations/${slug}/work`}
+                className={buttonVariants({
+                  variant: "outline",
+                  size: "lg",
+                  className: "min-h-11 px-5 text-base",
+                })}
+              >
+                <FileCode2 className="size-4" aria-hidden="true" />
+                Работа команды
+              </Link>
+
+              {!isFinished ? (
+                team.viewerIsCaptain ? (
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="lg"
+                    disabled={isBusy}
+                    onClick={() => setIsDisbandDialogOpen(true)}
+                    className="min-h-11 px-5 text-base"
+                  >
+                    <Trash2 className="size-4" aria-hidden="true" />
+                    {pending === "disband"
+                      ? "Распускаем..."
+                      : "Распустить команду"}
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="lg"
+                    disabled={isBusy}
+                    onClick={() => setIsLeaveDialogOpen(true)}
+                    className="min-h-11 px-5 text-base"
+                  >
+                    <LogOut className="size-4" aria-hidden="true" />
+                    {pending === "leave" ? "Выходим..." : "Покинуть команду"}
+                  </Button>
+                )
+              ) : null}
+            </div>
           </CardContent>
         </Card>
       )}
@@ -786,7 +822,8 @@ export function TeamPanel({
             <AlertDialogTitle>Распустить команду?</AlertDialogTitle>
             <AlertDialogDescription>
               Команда «{team?.name ?? ""}» будет удалена. Все участники выйдут
-              из команды. Это действие нельзя отменить.
+              из команды. Работа команды, если она сдана, тоже будет удалена.
+              Это действие нельзя отменить.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

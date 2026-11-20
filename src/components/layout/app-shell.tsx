@@ -7,7 +7,7 @@ interface AppShellProps {
 export function AppShell({ children }: AppShellProps) {
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="border-b bg-card">
+      <header className="sticky top-0 z-40 border-b border-border bg-card/85 backdrop-blur-md">
         <HeaderNav />
       </header>
 
@@ -15,7 +15,7 @@ export function AppShell({ children }: AppShellProps) {
         {children}
       </main>
 
-      <footer className="border-t bg-card">
+      <footer className="border-t border-border bg-muted/45">
         <div className="mx-auto max-w-6xl px-4 py-6 text-sm text-muted-foreground sm:text-base">
           Платформа для поиска, организации и проведения хакатонов.
         </div>

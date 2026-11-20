@@ -40,7 +40,7 @@ export function HackathonResultItem({ item }: HackathonResultItemProps) {
         <div className="flex flex-wrap items-center justify-between gap-2.5">
           <Badge
             variant={getPlaceBadgeVariant(item.place)}
-            className="gap-1.5 px-3 py-1 text-sm font-semibold"
+            className="gap-1.5 px-3 py-1 text-sm font-semibold tabular-nums"
           >
             <Award className="size-4" aria-hidden="true" />
             {item.place} место
@@ -48,7 +48,7 @@ export function HackathonResultItem({ item }: HackathonResultItemProps) {
 
           <Badge
             variant="secondary"
-            className="gap-1.5 px-3 py-1 text-sm font-semibold"
+            className="gap-1.5 px-3 py-1 text-sm font-semibold tabular-nums"
           >
             <Star className="size-3.5 fill-current" aria-hidden="true" />
             {item.score} из 10
@@ -65,7 +65,10 @@ export function HackathonResultItem({ item }: HackathonResultItemProps) {
             <span>{item.authorName}</span>
           </span>
           {item.teamName !== null ? (
-            <Badge variant="outline" className="px-2 py-0.5 text-xs">
+            <Badge
+              variant="outline"
+              className="border-team/30 bg-team-bg px-2.5 py-0.5 text-xs font-semibold text-team"
+            >
               Команда
             </Badge>
           ) : null}

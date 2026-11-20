@@ -63,12 +63,12 @@ export async function generateMetadata({
 
 function HackathonNotFound() {
   return (
-    <div className="flex flex-col items-center justify-center gap-4 rounded-xl border bg-card px-6 py-16 text-center shadow-xs">
+    <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-border bg-muted/45 px-6 py-16 text-center shadow-xs">
       <div aria-hidden="true" className="text-4xl">
         ❌
       </div>
       <div className="flex max-w-md flex-col gap-2">
-        <h1 className="text-2xl font-bold text-foreground sm:text-3xl">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
           Хакатон не найден
         </h1>
         <p className="text-base text-muted-foreground">
@@ -90,12 +90,12 @@ function HackathonNotFound() {
 
 function HackathonLoadError() {
   return (
-    <div className="flex flex-col items-center justify-center gap-4 rounded-xl border bg-card px-6 py-16 text-center shadow-xs">
+    <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-destructive/30 bg-destructive-bg/60 px-6 py-16 text-center shadow-xs">
       <div className="flex max-w-md flex-col gap-2">
-        <h1 className="text-2xl font-bold text-foreground sm:text-3xl">
+        <h1 className="text-2xl font-bold tracking-tight text-destructive sm:text-3xl">
           Не удалось загрузить хакатон
         </h1>
-        <p className="text-base text-muted-foreground">
+        <p className="text-base text-foreground/85">
           Не удалось загрузить хакатон. Попробуйте обновить страницу позже.
         </p>
       </div>
@@ -255,13 +255,13 @@ async function HackathonDetailContent({
                 <span>Организатор: {hackathon.organizerName}</span>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 tabular-nums">
                 <Users className="size-5 shrink-0 text-muted-foreground" />
                 <span>{participantsText}</span>
               </div>
 
               {hackathon.prizePool && (
-                <div className="mt-2 flex items-center gap-3 rounded-xl bg-accent/70 px-4 py-3 text-lg font-semibold text-accent-foreground">
+                <div className="mt-2 flex items-center gap-3 rounded-xl border border-primary/15 bg-accent/80 px-4 py-3 text-lg font-semibold text-accent-foreground tabular-nums">
                   <Trophy className="size-5 shrink-0" />
                   <span>Призовой фонд: {hackathon.prizePool}</span>
                 </div>
@@ -270,8 +270,10 @@ async function HackathonDetailContent({
           </Card>
 
           <section className="flex flex-col gap-3">
-            <h2 className="text-2xl font-bold text-foreground">Описание</h2>
-            <div className="flex flex-col gap-3 text-base leading-relaxed text-foreground">
+            <h2 className="text-2xl font-bold tracking-tight text-foreground">
+              Описание
+            </h2>
+            <div className="flex max-w-[65ch] flex-col gap-3 text-base leading-relaxed text-foreground">
               {paragraphs.map((paragraph, index) => (
                 <p key={index}>{paragraph}</p>
               ))}
@@ -280,7 +282,7 @@ async function HackathonDetailContent({
 
           {hackathon.tags.length > 0 && (
             <section className="flex flex-col gap-3">
-              <h2 className="text-2xl font-bold text-foreground">
+              <h2 className="text-2xl font-bold tracking-tight text-foreground">
                 Темы и технологии
               </h2>
               <div className="flex flex-wrap gap-2">
@@ -288,7 +290,7 @@ async function HackathonDetailContent({
                   <Badge
                     key={tag}
                     variant="secondary"
-                    className="px-3 py-1 text-sm font-normal"
+                    className="px-3 py-1 text-sm font-medium"
                   >
                     {tag}
                   </Badge>
@@ -298,7 +300,7 @@ async function HackathonDetailContent({
           )}
         </div>
 
-        <aside className="lg:sticky lg:top-8 lg:self-start">
+        <aside className="lg:sticky lg:top-24 lg:self-start">
           <Card className="p-2">
             <CardHeader>
               <CardTitle className="text-xl">Участие</CardTitle>

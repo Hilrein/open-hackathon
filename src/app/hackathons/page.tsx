@@ -46,12 +46,12 @@ function formatFoundCount(count: number): string {
 
 function DatabaseErrorState() {
   return (
-    <div className="flex flex-col items-center justify-center gap-4 rounded-xl border bg-card px-6 py-14 text-center shadow-xs">
+    <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-destructive/30 bg-destructive-bg/60 px-6 py-12 text-center shadow-xs sm:py-14">
       <div className="flex max-w-md flex-col gap-2">
-        <h2 className="text-xl font-semibold text-foreground">
+        <h2 className="text-xl font-bold tracking-tight text-destructive">
           Не удалось загрузить хакатоны
         </h2>
-        <p className="text-base text-muted-foreground">
+        <p className="text-base text-foreground/85">
           Попробуйте обновить страницу позже.
         </p>
       </div>
@@ -70,9 +70,9 @@ function DatabaseErrorState() {
 
 function EmptyDatabaseState() {
   return (
-    <div className="flex flex-col items-center justify-center gap-4 rounded-xl border bg-card px-6 py-14 text-center shadow-xs">
+    <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-border bg-muted/45 px-6 py-12 text-center shadow-xs sm:py-14">
       <div className="flex max-w-md flex-col gap-2">
-        <h2 className="text-xl font-semibold text-foreground">
+        <h2 className="text-xl font-bold tracking-tight text-foreground">
           Пока нет хакатонов
         </h2>
         <p className="text-base text-muted-foreground">
@@ -94,12 +94,12 @@ function EmptyDatabaseState() {
 
 function NoMatchesState() {
   return (
-    <div className="flex flex-col items-center justify-center gap-4 rounded-xl border bg-card px-6 py-14 text-center shadow-xs">
+    <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-border bg-muted/45 px-6 py-12 text-center shadow-xs sm:py-14">
       <div aria-hidden="true" className="text-4xl">
         🔍
       </div>
       <div className="flex max-w-md flex-col gap-2">
-        <h2 className="text-xl font-semibold text-foreground">
+        <h2 className="text-xl font-bold tracking-tight text-foreground">
           Ничего не найдено
         </h2>
         <p className="text-base text-muted-foreground">
@@ -161,7 +161,7 @@ async function HackathonsCatalogContent({ searchParams }: HackathonsPageProps) {
         key={formKey}
         method="get"
         action="/hackathons"
-        className="grid grid-cols-1 gap-4 rounded-xl border bg-card p-4 shadow-xs sm:grid-cols-2 lg:grid-cols-12 lg:items-end"
+        className="grid grid-cols-1 gap-4 rounded-2xl border border-border bg-card p-5 shadow-[0_1px_2px_hsl(258_34%_13%/0.05),0_6px_18px_-8px_hsl(258_34%_13%/0.06)] sm:grid-cols-2 lg:grid-cols-12 lg:items-end"
       >
         <div className="flex flex-col gap-2 sm:col-span-2 lg:col-span-4">
           <Label htmlFor="catalog-q" className="text-sm font-medium">
@@ -185,7 +185,7 @@ async function HackathonsCatalogContent({ searchParams }: HackathonsPageProps) {
             id="catalog-status"
             name="status"
             defaultValue={params.status}
-            className="min-h-11 w-full rounded-lg border border-input bg-background px-3 text-base text-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+            className="min-h-11 w-full rounded-lg border border-input bg-card px-3 text-base text-foreground transition-colors duration-150 hover:border-border-strong focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/35"
           >
             <option value="all">Все статусы</option>
             <option value="upcoming">Скоро</option>
@@ -202,7 +202,7 @@ async function HackathonsCatalogContent({ searchParams }: HackathonsPageProps) {
             id="catalog-format"
             name="format"
             defaultValue={params.format}
-            className="min-h-11 w-full rounded-lg border border-input bg-background px-3 text-base text-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+            className="min-h-11 w-full rounded-lg border border-input bg-card px-3 text-base text-foreground transition-colors duration-150 hover:border-border-strong focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/35"
           >
             <option value="all">Все форматы</option>
             <option value="online">Онлайн</option>
@@ -219,7 +219,7 @@ async function HackathonsCatalogContent({ searchParams }: HackathonsPageProps) {
             id="catalog-sort"
             name="sort"
             defaultValue={params.sort}
-            className="min-h-11 w-full rounded-lg border border-input bg-background px-3 text-base text-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+            className="min-h-11 w-full rounded-lg border border-input bg-card px-3 text-base text-foreground transition-colors duration-150 hover:border-border-strong focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/35"
           >
             <option value="actual">Сначала актуальные</option>
             <option value="date-asc">Сначала ближайшие</option>
@@ -250,7 +250,7 @@ async function HackathonsCatalogContent({ searchParams }: HackathonsPageProps) {
         </div>
       </form>
 
-      <p className="text-base font-medium text-muted-foreground">
+      <p className="text-base font-medium text-muted-foreground tabular-nums">
         {formatFoundCount(catalogPage.total)}
       </p>
 
@@ -289,7 +289,7 @@ async function HackathonsCatalogContent({ searchParams }: HackathonsPageProps) {
                 </Button>
               )}
 
-              <p className="text-sm font-medium text-muted-foreground sm:text-base">
+              <p className="text-sm font-medium text-muted-foreground tabular-nums sm:text-base">
                 Страница {catalogPage.page} из {catalogPage.totalPages}
               </p>
 

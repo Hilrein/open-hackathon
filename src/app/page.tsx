@@ -40,12 +40,12 @@ const HOW_IT_WORKS_STEPS = [
 
 function FeaturedErrorState() {
   return (
-    <div className="flex flex-col items-start gap-4 rounded-xl border bg-card p-6 shadow-xs">
-      <div className="flex flex-col gap-1">
-        <h3 className="text-xl font-semibold text-foreground">
+    <div className="flex flex-col items-start gap-4 rounded-xl border border-destructive/30 bg-destructive-bg/60 p-6 shadow-xs sm:p-8">
+      <div className="flex max-w-xl flex-col gap-1.5">
+        <h3 className="text-xl font-bold tracking-tight text-destructive">
           Не удалось загрузить хакатоны
         </h3>
-        <p className="text-base text-muted-foreground">
+        <p className="text-base text-foreground/85">
           Попробуйте обновить страницу позже.
         </p>
       </div>
@@ -64,9 +64,9 @@ function FeaturedErrorState() {
 
 function FeaturedEmptyState() {
   return (
-    <div className="flex flex-col items-start gap-4 rounded-xl border bg-card p-6 shadow-xs">
-      <div className="flex flex-col gap-1">
-        <h3 className="text-xl font-semibold text-foreground">
+    <div className="flex flex-col items-start gap-4 rounded-xl border border-border bg-muted/45 p-6 shadow-xs sm:p-8">
+      <div className="flex max-w-xl flex-col gap-1.5">
+        <h3 className="text-xl font-bold tracking-tight text-foreground">
           Сейчас нет активных хакатонов
         </h3>
         <p className="text-base text-muted-foreground">
@@ -129,33 +129,35 @@ async function FeaturedHackathonsContent() {
 
 export default function HomePage() {
   return (
-    <div className="flex flex-col gap-16">
-      <section className="flex flex-col items-start gap-6 py-4 sm:py-8">
-        <h1 className="max-w-3xl text-3xl font-bold tracking-tight text-foreground sm:text-5xl">
-          Найдите хакатон или создайте свой
-        </h1>
-        <p className="max-w-2xl text-lg text-muted-foreground sm:text-xl">
-          Простая платформа для участников, организаторов и команд.
-        </p>
-        <div className="flex flex-wrap gap-4">
-          <Link
-            href="/hackathons"
-            className={cn(
-              buttonVariants({ variant: "default", size: "lg" }),
-              "min-h-12 px-7 text-base font-semibold shadow-sm"
-            )}
-          >
-            Смотреть хакатоны
-          </Link>
-          <Link
-            href="/create"
-            className={cn(
-              buttonVariants({ variant: "outline", size: "lg" }),
-              "min-h-12 px-6 text-base"
-            )}
-          >
-            Создать хакатон
-          </Link>
+    <div className="flex flex-col gap-14 sm:gap-16">
+      <section className="hero-backdrop relative overflow-hidden rounded-3xl border border-border px-6 py-10 shadow-[0_1px_3px_hsl(258_34%_13%/0.05),0_12px_32px_-16px_hsl(262_83%_54%/0.16)] sm:px-10 sm:py-14 lg:px-14 lg:py-16">
+        <div className="relative flex flex-col items-start gap-6">
+          <h1 className="max-w-3xl text-3xl font-extrabold tracking-tight text-foreground sm:text-5xl sm:leading-[1.08]">
+            Найдите хакатон или создайте свой
+          </h1>
+          <p className="max-w-[54ch] text-lg leading-relaxed text-muted-foreground sm:text-xl">
+            Простая платформа для участников, организаторов и команд.
+          </p>
+          <div className="flex flex-wrap items-center gap-3.5 pt-1">
+            <Link
+              href="/hackathons"
+              className={cn(
+                buttonVariants({ variant: "default", size: "lg" }),
+                "min-h-12 px-7 text-base font-semibold shadow-sm"
+              )}
+            >
+              Смотреть хакатоны
+            </Link>
+            <Link
+              href="/create"
+              className={cn(
+                buttonVariants({ variant: "outline", size: "lg" }),
+                "min-h-12 px-6 text-base"
+              )}
+            >
+              Создать хакатон
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -167,7 +169,7 @@ export default function HomePage() {
           >
             Ближайшие хакатоны
           </h2>
-          <p className="text-base text-muted-foreground sm:text-lg">
+          <p className="max-w-[60ch] text-base text-muted-foreground sm:text-lg">
             Актуальные хакатоны, которые скоро начнутся или уже идут.
           </p>
         </div>
@@ -183,7 +185,10 @@ export default function HomePage() {
         </Suspense>
       </section>
 
-      <section aria-labelledby="how-it-works-heading" className="flex flex-col gap-6">
+      <section
+        aria-labelledby="how-it-works-heading"
+        className="flex flex-col gap-6 rounded-3xl border border-border/80 bg-muted/45 p-6 sm:p-8 lg:p-10"
+      >
         <h2
           id="how-it-works-heading"
           className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl"
@@ -196,11 +201,11 @@ export default function HomePage() {
             <li key={step.number}>
               <Card className="h-full p-2">
                 <CardHeader className="gap-3">
-                  <span className="inline-flex size-10 items-center justify-center rounded-full bg-primary text-lg font-bold text-primary-foreground">
+                  <span className="inline-flex size-10 items-center justify-center rounded-xl bg-accent text-lg font-extrabold text-accent-foreground ring-1 ring-primary/20 tabular-nums">
                     {step.number}
                   </span>
                   <CardTitle className="text-xl">{step.title}</CardTitle>
-                  <CardDescription className="text-base leading-relaxed">
+                  <CardDescription className="max-w-[42ch] text-base leading-relaxed">
                     {step.description}
                   </CardDescription>
                 </CardHeader>
@@ -213,8 +218,8 @@ export default function HomePage() {
           <Link
             href="/how-it-works"
             className={cn(
-              buttonVariants({ variant: "ghost", size: "lg" }),
-              "min-h-11 px-4 text-base"
+              buttonVariants({ variant: "outline", size: "lg" }),
+              "min-h-11 px-5 text-base"
             )}
           >
             Подробнее о процессе
@@ -224,7 +229,7 @@ export default function HomePage() {
 
       <section
         aria-labelledby="organizers-heading"
-        className="flex flex-col items-start gap-4 rounded-2xl border bg-card p-6 shadow-xs sm:p-8"
+        className="flex flex-col items-start gap-5 rounded-3xl border border-primary/20 bg-gradient-to-br from-card via-card to-accent/70 p-6 shadow-[0_1px_3px_hsl(258_34%_13%/0.05),0_10px_28px_-14px_hsl(262_83%_54%/0.18)] sm:p-10"
       >
         <div className="flex flex-col gap-2">
           <h2
@@ -233,7 +238,7 @@ export default function HomePage() {
           >
             Хотите провести хакатон?
           </h2>
-          <p className="max-w-2xl text-base text-muted-foreground sm:text-lg">
+          <p className="max-w-[58ch] text-base text-muted-foreground sm:text-lg">
             Создайте хакатон и соберите участников на одной платформе.
           </p>
         </div>

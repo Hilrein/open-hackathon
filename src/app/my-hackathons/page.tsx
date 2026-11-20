@@ -48,12 +48,12 @@ async function MyHackathonsContent() {
 
   if (hasError) {
     return (
-      <Card>
+      <Card className="border-destructive/30 bg-destructive-bg/60">
         <CardContent className="space-y-4 p-6 text-center sm:p-8">
-          <h2 className="text-xl font-semibold text-foreground">
+          <h2 className="text-xl font-bold tracking-tight text-destructive">
             Не удалось загрузить ваши хакатоны
           </h2>
-          <p className="mx-auto max-w-md text-base text-muted-foreground">
+          <p className="mx-auto max-w-md text-base text-foreground/85">
             Возникла ошибка при обращении к базе данных. Попробуйте обновить
             страницу чуть позже.
           </p>
@@ -75,9 +75,9 @@ async function MyHackathonsContent() {
 
   if (hackathons.length === 0) {
     return (
-      <Card>
+      <Card className="border-border bg-muted/45">
         <CardContent className="space-y-4 p-6 text-center sm:p-8">
-          <h2 className="text-xl font-semibold text-foreground">
+          <h2 className="text-xl font-bold tracking-tight text-foreground">
             У вас пока нет созданных хакатонов
           </h2>
           <p className="mx-auto max-w-md text-base text-muted-foreground">

@@ -56,7 +56,10 @@ export function SubmissionItem({
       <CardHeader className="gap-3 pb-4">
         {submission.isTeamSubmission ? (
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="secondary" className="gap-1.5 px-2.5 py-0.5 text-xs">
+            <Badge
+              variant="outline"
+              className="gap-1.5 border-team/30 bg-team-bg px-2.5 py-0.5 text-xs font-semibold text-team"
+            >
               <UsersRound className="size-3.5" aria-hidden="true" />
               Команда
             </Badge>

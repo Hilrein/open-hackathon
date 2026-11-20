@@ -19,7 +19,7 @@ function DesktopNavLinks() {
   return (
     <nav
       aria-label="Основная навигация"
-      className="hidden items-center gap-2 md:flex"
+      className="hidden items-center gap-1.5 md:flex"
     >
       {NAV_ITEMS.map((item) => {
         const isActive = pathname === item.href;
@@ -29,10 +29,10 @@ function DesktopNavLinks() {
             href={item.href}
             aria-current={isActive ? "page" : undefined}
             className={cn(
-              "inline-flex min-h-11 items-center rounded-lg px-4 text-base font-medium transition-colors",
+              "inline-flex min-h-11 items-center rounded-lg border px-4 text-base font-medium transition-[color,background-color,border-color,box-shadow] duration-150",
               isActive
-                ? "bg-primary text-primary-foreground"
-                : "text-foreground hover:bg-muted"
+                ? "border-primary/25 bg-accent font-semibold text-accent-foreground shadow-[inset_0_-2px_0_0_var(--primary)]"
+                : "border-transparent text-foreground hover:bg-muted/80 hover:text-foreground"
             )}
           >
             {item.label}
@@ -57,10 +57,10 @@ function MobileNavLinks({ onClose }: { onClose: () => void }) {
               onClick={onClose}
               aria-current={isActive ? "page" : undefined}
               className={cn(
-                "flex min-h-11 w-full items-center rounded-lg px-4 text-base font-medium transition-colors",
+                "flex min-h-11 w-full items-center rounded-lg border px-4 text-base font-medium transition-[color,background-color,border-color] duration-150",
                 isActive
-                  ? "bg-primary text-primary-foreground"
-                  : "text-foreground hover:bg-muted"
+                  ? "border-primary/25 border-l-4 border-l-primary bg-accent font-semibold text-accent-foreground"
+                  : "border-transparent text-foreground hover:bg-muted/80"
               )}
             >
               {item.label}
@@ -77,26 +77,32 @@ export function HeaderNav() {
 
   return (
     <>
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
+      <div className="mx-auto flex max-w-6xl min-w-0 items-center justify-between gap-3 px-4 py-3">
         <Link
           href="/"
           onClick={() => setMenuOpen(false)}
-          className="inline-flex min-h-11 items-center rounded-md px-2 text-xl font-bold tracking-tight text-foreground hover:text-primary/80"
+          className="inline-flex min-h-11 shrink-0 items-center gap-2.5 rounded-lg px-1.5 text-xl font-extrabold tracking-tight text-foreground transition-colors duration-150 hover:text-primary"
         >
-          Хакатоны
+          <span
+            aria-hidden="true"
+            className="inline-flex size-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary via-format-hybrid to-format-online shadow-xs"
+          >
+            <span className="size-2.5 rotate-45 rounded-[2px] bg-primary-foreground/95" />
+          </span>
+          <span>Хакатоны</span>
         </Link>
 
         <Suspense
           fallback={
             <nav
               aria-label="Основная навигация"
-              className="hidden items-center gap-2 md:flex"
+              className="hidden items-center gap-1.5 md:flex"
             >
               {NAV_ITEMS.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="inline-flex min-h-11 items-center rounded-lg px-4 text-base font-medium text-foreground hover:bg-muted"
+                  className="inline-flex min-h-11 items-center rounded-lg border border-transparent px-4 text-base font-medium text-foreground transition-colors duration-150 hover:bg-muted/80"
                 >
                   {item.label}
                 </Link>
@@ -117,7 +123,7 @@ export function HeaderNav() {
           aria-controls="mobile-nav"
           aria-label={menuOpen ? "Закрыть меню" : "Открыть меню"}
           onClick={() => setMenuOpen((prev) => !prev)}
-          className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-border bg-background text-foreground hover:bg-muted md:hidden"
+          className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg border border-border bg-card text-foreground transition-[color,background-color,border-color] duration-150 hover:border-border-strong hover:bg-accent/60 md:hidden"
         >
           {menuOpen ? <X className="size-6" /> : <Menu className="size-6" />}
         </button>
@@ -127,12 +133,12 @@ export function HeaderNav() {
         <nav
           id="mobile-nav"
           aria-label="Мобильная навигация"
-          className="border-t bg-card px-4 py-3 md:hidden"
+          className="border-t border-border bg-card/95 px-4 py-3 backdrop-blur-md transition-opacity duration-150 md:hidden"
         >
           <Suspense fallback={null}>
             <MobileNavLinks onClose={() => setMenuOpen(false)} />
           </Suspense>
-          <div className="mx-auto mt-3 max-w-6xl border-t pt-3">
+          <div className="mx-auto mt-3 max-w-6xl border-t border-border pt-3">
             <UserMenu
               fullWidthOnMobile
               onAction={() => setMenuOpen(false)}

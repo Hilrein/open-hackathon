@@ -100,12 +100,12 @@ async function HackathonResultsContent({ params }: HackathonResultsPageProps) {
 
   if (hasError || !data) {
     return (
-      <Card className="mx-auto w-full max-w-xl">
+      <Card className="mx-auto w-full max-w-xl border-destructive/30 bg-destructive-bg/60">
         <CardContent className="space-y-4 p-6 text-center sm:p-8">
-          <h1 className="text-xl font-semibold text-foreground">
+          <h1 className="text-xl font-bold tracking-tight text-destructive">
             Не удалось загрузить результаты
           </h1>
-          <p className="text-base text-muted-foreground">
+          <p className="text-base text-foreground/85">
             Попробуйте обновить страницу позже.
           </p>
           <div>
@@ -126,9 +126,9 @@ async function HackathonResultsContent({ params }: HackathonResultsPageProps) {
 
   if (data.kind === "not-found") {
     return (
-      <Card className="mx-auto w-full max-w-xl">
+      <Card className="mx-auto w-full max-w-xl border-border bg-muted/45">
         <CardContent className="space-y-4 p-6 text-center sm:p-8">
-          <h1 className="text-xl font-semibold text-foreground">
+          <h1 className="text-xl font-bold tracking-tight text-foreground">
             Хакатон не найден
           </h1>
           <p className="text-base text-muted-foreground">
@@ -283,9 +283,9 @@ async function HackathonResultsContent({ params }: HackathonResultsPageProps) {
       </div>
 
       {results.length === 0 ? (
-        <Card>
+        <Card className="border-border bg-muted/45">
           <CardContent className="space-y-4 p-6 text-center sm:p-8">
-            <h2 className="text-xl font-semibold text-foreground">
+            <h2 className="text-xl font-bold tracking-tight text-foreground">
               Пока нет оценённых работ
             </h2>
             <p className="mx-auto max-w-md text-base text-muted-foreground">

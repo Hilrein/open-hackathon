@@ -54,12 +54,12 @@ async function MyParticipationsContent() {
 
   if (hasError) {
     return (
-      <Card>
+      <Card className="border-destructive/30 bg-destructive-bg/60">
         <CardContent className="space-y-4 p-6 text-center sm:p-8">
-          <h2 className="text-xl font-semibold text-foreground">
+          <h2 className="text-xl font-bold tracking-tight text-destructive">
             Не удалось загрузить ваши участия
           </h2>
-          <p className="mx-auto max-w-md text-base text-muted-foreground">
+          <p className="mx-auto max-w-md text-base text-foreground/85">
             Попробуйте обновить страницу позже.
           </p>
           <div>
@@ -80,9 +80,9 @@ async function MyParticipationsContent() {
 
   if (participations.length === 0) {
     return (
-      <Card>
+      <Card className="border-border bg-muted/45">
         <CardContent className="space-y-4 p-6 text-center sm:p-8">
-          <h2 className="text-xl font-semibold text-foreground">
+          <h2 className="text-xl font-bold tracking-tight text-foreground">
             Вы пока не участвуете в хакатонах
           </h2>
           <p className="mx-auto max-w-md text-base text-muted-foreground">

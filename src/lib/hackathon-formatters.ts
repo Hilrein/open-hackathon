@@ -8,18 +8,19 @@ export const HACKATHON_STATUS_CONFIG: Record<
     label: "Скоро",
     detailLabel: "Скоро",
     className:
-      "border-status-upcoming/30 bg-status-upcoming/10 text-status-upcoming",
+      "border-status-upcoming/30 bg-status-upcoming-bg text-status-upcoming",
   },
   active: {
     label: "Идёт",
     detailLabel: "Идёт сейчас",
-    className: "border-status-active/30 bg-status-active/10 text-status-active",
+    className:
+      "border-status-active/30 bg-status-active-bg text-status-active",
   },
   finished: {
     label: "Завершён",
     detailLabel: "Завершён",
     className:
-      "border-status-finished/30 bg-status-finished/10 text-status-finished",
+      "border-status-finished/30 bg-status-finished-bg text-status-finished",
   },
 };
 
@@ -29,16 +30,18 @@ export const HACKATHON_FORMAT_CONFIG: Record<
 > = {
   online: {
     label: "Онлайн",
-    className: "border-format-online/30 bg-format-online/10 text-format-online",
+    className:
+      "border-format-online/30 bg-format-online-bg text-format-online",
   },
   offline: {
     label: "Офлайн",
     className:
-      "border-format-offline/30 bg-format-offline/10 text-format-offline",
+      "border-format-offline/30 bg-format-offline-bg text-format-offline",
   },
   hybrid: {
     label: "Гибрид",
-    className: "border-format-hybrid/30 bg-format-hybrid/10 text-format-hybrid",
+    className:
+      "border-format-hybrid/30 bg-format-hybrid-bg text-format-hybrid",
   },
 };
 

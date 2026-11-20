@@ -71,13 +71,13 @@
   --accent-foreground: hsl(224 76% 35%);
   --destructive: hsl(0 72% 45%);
   --border: hsl(214 20% 88%);
-  --input: hsl(214 20% 84%);
+  --input: hsl(214 20% 55%);
   --ring: hsl(224 76% 48%);
   --status-upcoming: hsl(221 83% 45%);
-  --status-active: hsl(142 72% 29%);
+  --status-active: hsl(142 72% 25%);
   --status-finished: hsl(215 16% 40%);
   --format-online: hsl(262 70% 45%);
-  --format-offline: hsl(24 85% 38%);
+  --format-offline: hsl(24 85% 33%);
   --format-hybrid: hsl(188 78% 30%);
   --chart-1: hsl(224 76% 48%);
   --chart-2: hsl(142 72% 29%);
@@ -101,14 +101,33 @@
   }
   html {
     @apply font-sans text-base antialiased;
+    scroll-padding-top: 5.5rem;
   }
   body {
-    @apply bg-background text-foreground leading-relaxed;
+    @apply overflow-x-clip bg-background text-foreground leading-relaxed;
+  }
+  [id] {
+    scroll-margin-top: 5.5rem;
   }
   a:focus-visible,
   button:focus-visible,
   input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
   [tabindex]:focus-visible {
     @apply outline-2 outline-offset-2 outline-ring;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

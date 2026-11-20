@@ -60,7 +60,7 @@ export function ParticipationItem({
           <h2 className="text-lg font-semibold leading-snug text-foreground">
             <Link
               href={`/hackathons/${hackathon.id}`}
-              className="hover:underline focus-visible:underline focus-visible:outline-none"
+              className="rounded-sm hover:underline focus-visible:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
             >
               {hackathon.title}
             </Link>

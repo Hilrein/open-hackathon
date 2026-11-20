@@ -188,7 +188,7 @@ async function HackathonParticipantsContent({
         <p className="text-base text-muted-foreground">
           <Link
             href={hackathonUrl}
-            className="font-medium text-foreground hover:underline focus-visible:underline focus-visible:outline-none"
+            className="rounded-sm font-medium text-foreground hover:underline focus-visible:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
           >
             {hackathon.title}
           </Link>

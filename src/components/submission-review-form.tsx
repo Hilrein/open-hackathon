@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, Info, Star, Trash2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -41,6 +41,26 @@ interface ReviewApiResponse {
 
 const SCORE_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
 
+function joinDescribedBy(
+  ...ids: Array<string | false | null | undefined>
+): string | undefined {
+  const filtered = ids.filter(Boolean) as string[];
+  return filtered.length > 0 ? filtered.join(" ") : undefined;
+}
+
+const REVIEW_FIELD_ORDER: ReviewFieldName[] = ["score", "feedback"];
+
+function getFirstReviewErrorField(
+  errors: ReviewFieldErrors
+): ReviewFieldName | null {
+  for (const field of REVIEW_FIELD_ORDER) {
+    if (errors[field]) {
+      return field;
+    }
+  }
+  return null;
+}
+
 export function SubmissionReviewForm({
   slug,
   submissionId,
@@ -65,8 +85,39 @@ export function SubmissionReviewForm({
   const [isRemoving, setIsRemoving] = useState(false);
   const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState(false);
 
+  const scoreRef = useRef<HTMLSelectElement>(null);
+  const feedbackRef = useRef<HTMLTextAreaElement>(null);
+  const focusNonceRef = useRef(0);
+  const handledFocusNonceRef = useRef(0);
+  const [pendingFocus, setPendingFocus] = useState<{
+    field: ReviewFieldName;
+    nonce: number;
+  } | null>(null);
+
   const isFinished = hackathonStatus === "finished";
   const isBusy = isSaving || isRemoving;
+
+  function scheduleFieldFocus(field: ReviewFieldName) {
+    focusNonceRef.current += 1;
+    setPendingFocus({ field, nonce: focusNonceRef.current });
+  }
+
+  useEffect(() => {
+    if (isBusy || !pendingFocus) {
+      return;
+    }
+    if (handledFocusNonceRef.current === pendingFocus.nonce) {
+      return;
+    }
+    handledFocusNonceRef.current = pendingFocus.nonce;
+
+    const fieldElementMap: Record<ReviewFieldName, HTMLElement | null> = {
+      score: scoreRef.current,
+      feedback: feedbackRef.current,
+    };
+    fieldElementMap[pendingFocus.field]?.focus({ preventScroll: true });
+  }, [isBusy, pendingFocus]);
+
   const redirectToSignInUrl = `/sign-in?redirect=${encodeURIComponent(
     `/my-hackathons/${slug}/submissions`
   )}`;
@@ -78,6 +129,7 @@ export function SubmissionReviewForm({
   const scoreHintId = `review-score-hint-${submissionId}`;
   const feedbackErrorId = `review-feedback-error-${submissionId}`;
   const feedbackHintId = `review-feedback-hint-${submissionId}`;
+  const feedbackCountId = `review-feedback-count-${submissionId}`;
   const scoreSelectId = `review-score-${submissionId}`;
   const feedbackTextareaId = `review-feedback-${submissionId}`;
 
@@ -126,6 +178,10 @@ export function SubmissionReviewForm({
       }
       setFieldErrors(mapped);
       setErrorMessage("Проверьте поля формы.");
+      const firstErrorField = getFirstReviewErrorField(mapped);
+      if (firstErrorField) {
+        scheduleFieldFocus(firstErrorField);
+      }
       return;
     }
 
@@ -196,6 +252,10 @@ export function SubmissionReviewForm({
           }
           setFieldErrors(mapped);
           setErrorMessage("Проверьте поля формы.");
+          const firstErrorField = getFirstReviewErrorField(mapped);
+          if (firstErrorField) {
+            scheduleFieldFocus(firstErrorField);
+          }
         } else {
           setErrorMessage(serverError || "Не удалось сохранить оценку.");
           router.refresh();
@@ -348,6 +408,7 @@ export function SubmissionReviewForm({
                   type="button"
                   variant="destructive"
                   disabled={isBusy}
+                  aria-busy={isRemoving}
                   onClick={() => setIsRemoveDialogOpen(true)}
                   className="min-h-11 px-4 text-base"
                 >
@@ -365,16 +426,22 @@ export function SubmissionReviewForm({
               Оценка
             </Label>
             <select
+              ref={scoreRef}
               id={scoreSelectId}
               value={scoreValue}
               onChange={(event) => {
                 setScoreValue(event.target.value);
                 clearFieldError("score");
               }}
+              disabled={isBusy}
+              aria-required="true"
               aria-invalid={Boolean(fieldErrors.score)}
-              aria-describedby={fieldErrors.score ? scoreErrorId : scoreHintId}
+              aria-describedby={joinDescribedBy(
+                scoreHintId,
+                fieldErrors.score && scoreErrorId
+              )}
               className={cn(
-                "flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-base shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20"
+                "flex h-11 w-full rounded-lg border border-input bg-transparent px-3 py-2 text-base transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/40 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-muted disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20"
               )}
             >
               <option value="">Выберите оценку</option>
@@ -384,15 +451,18 @@ export function SubmissionReviewForm({
                 </option>
               ))}
             </select>
+            <p id={scoreHintId} className="text-sm text-muted-foreground">
+              От 1 до 10.
+            </p>
             {fieldErrors.score ? (
-              <p id={scoreErrorId} className="text-sm text-destructive">
+              <p
+                id={scoreErrorId}
+                role="alert"
+                className="text-sm font-medium text-destructive"
+              >
                 {fieldErrors.score}
               </p>
-            ) : (
-              <p id={scoreHintId} className="text-sm text-muted-foreground">
-                От 1 до 10.
-              </p>
-            )}
+            ) : null}
           </div>
 
           <div className="space-y-2">
@@ -400,11 +470,20 @@ export function SubmissionReviewForm({
               <Label htmlFor={feedbackTextareaId} className="text-base">
                 Комментарий
               </Label>
-              <span className="text-xs text-muted-foreground">
+              <span
+                id={feedbackCountId}
+                className={cn(
+                  "text-xs",
+                  feedback.trim().length > 2000
+                    ? "font-medium text-destructive"
+                    : "text-muted-foreground"
+                )}
+              >
                 {feedback.trim().length} / 2000
               </span>
             </div>
             <textarea
+              ref={feedbackRef}
               id={feedbackTextareaId}
               rows={3}
               value={feedback}
@@ -412,22 +491,28 @@ export function SubmissionReviewForm({
                 setFeedback(event.target.value);
                 clearFieldError("feedback");
               }}
+              disabled={isBusy}
               placeholder="Что получилось хорошо? Что можно улучшить?"
               aria-invalid={Boolean(fieldErrors.feedback)}
-              aria-describedby={
-                fieldErrors.feedback ? feedbackErrorId : feedbackHintId
-              }
-              className="w-full rounded-md border border-input bg-background px-3 py-2.5 text-base shadow-xs outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20"
+              aria-describedby={joinDescribedBy(
+                feedbackHintId,
+                feedbackCountId,
+                fieldErrors.feedback && feedbackErrorId
+              )}
+              className="w-full rounded-lg border border-input bg-transparent px-3 py-2.5 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/40 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-muted disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20"
             />
+            <p id={feedbackHintId} className="text-sm text-muted-foreground">
+              Необязательно. Участник увидит этот комментарий.
+            </p>
             {fieldErrors.feedback ? (
-              <p id={feedbackErrorId} className="text-sm text-destructive">
+              <p
+                id={feedbackErrorId}
+                role="alert"
+                className="text-sm font-medium text-destructive"
+              >
                 {fieldErrors.feedback}
               </p>
-            ) : (
-              <p id={feedbackHintId} className="text-sm text-muted-foreground">
-                Необязательно. Участник увидит этот комментарий.
-              </p>
-            )}
+            ) : null}
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -435,6 +520,7 @@ export function SubmissionReviewForm({
               type="submit"
               size="lg"
               disabled={isBusy}
+              aria-busy={isSaving}
               className="min-h-11 px-5 text-base"
             >
               {isSaving
@@ -450,6 +536,7 @@ export function SubmissionReviewForm({
                 variant="destructive"
                 size="lg"
                 disabled={isBusy}
+                aria-busy={isRemoving}
                 onClick={() => setIsRemoveDialogOpen(true)}
                 className="min-h-11 px-5 text-base"
               >

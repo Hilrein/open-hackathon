@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -32,7 +32,6 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -68,6 +67,13 @@ function formatRussianDate(iso: string): string {
   }).format(date);
 }
 
+function joinDescribedBy(
+  ...ids: Array<string | false | null | undefined>
+): string | undefined {
+  const filtered = ids.filter(Boolean) as string[];
+  return filtered.length > 0 ? filtered.join(" ") : undefined;
+}
+
 export function TeamPanel({
   slug,
   hackathonStatus,
@@ -93,8 +99,38 @@ export function TeamPanel({
   const [isLeaveDialogOpen, setIsLeaveDialogOpen] = useState(false);
   const [isDisbandDialogOpen, setIsDisbandDialogOpen] = useState(false);
 
+  const createNameRef = useRef<HTMLInputElement>(null);
+  const joinCodeRef = useRef<HTMLInputElement>(null);
+  const focusNonceRef = useRef(0);
+  const handledFocusNonceRef = useRef(0);
+  const [pendingFocus, setPendingFocus] = useState<{
+    field: "createName" | "joinCode";
+    nonce: number;
+  } | null>(null);
+
   const isFinished = hackathonStatus === "finished";
   const isBusy = pending !== null;
+
+  function scheduleFieldFocus(field: "createName" | "joinCode") {
+    focusNonceRef.current += 1;
+    setPendingFocus({ field, nonce: focusNonceRef.current });
+  }
+
+  useEffect(() => {
+    if (isBusy || !pendingFocus) {
+      return;
+    }
+    if (handledFocusNonceRef.current === pendingFocus.nonce) {
+      return;
+    }
+    handledFocusNonceRef.current = pendingFocus.nonce;
+
+    if (pendingFocus.field === "createName") {
+      createNameRef.current?.focus({ preventScroll: true });
+    } else {
+      joinCodeRef.current?.focus({ preventScroll: true });
+    }
+  }, [isBusy, pendingFocus]);
   const redirectToSignInUrl = `/sign-in?redirect=${encodeURIComponent(
     `/my-participations/${slug}/team`
   )}`;
@@ -130,6 +166,7 @@ export function TeamPanel({
       const msg = parsed.error.flatten().fieldErrors.name?.[0] ?? null;
       setCreateNameError(msg);
       setError("Проверьте поля формы.");
+      scheduleFieldFocus("createName");
       return;
     }
 
@@ -189,6 +226,7 @@ export function TeamPanel({
         if (data.fieldErrors?.name?.[0]) {
           setCreateNameError(data.fieldErrors.name[0]);
           setError("Проверьте поля формы.");
+          scheduleFieldFocus("createName");
         } else {
           setError(serverError || "Не удалось создать команду.");
           router.refresh();
@@ -230,6 +268,7 @@ export function TeamPanel({
       const msg = parsed.error.flatten().fieldErrors.inviteCode?.[0] ?? null;
       setJoinCodeError(msg);
       setError("Проверьте поля формы.");
+      scheduleFieldFocus("joinCode");
       return;
     }
 
@@ -289,6 +328,7 @@ export function TeamPanel({
         if (data.fieldErrors?.inviteCode?.[0]) {
           setJoinCodeError(data.fieldErrors.inviteCode[0]);
           setError("Проверьте поля формы.");
+          scheduleFieldFocus("joinCode");
         } else {
           setError(serverError || "Не удалось войти в команду.");
           router.refresh();
@@ -516,7 +556,9 @@ export function TeamPanel({
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <Card>
               <CardHeader>
-                <CardTitle className="text-xl">Создать команду</CardTitle>
+                <h2 className="text-xl font-semibold leading-snug text-foreground">
+                  Создать команду
+                </h2>
                 <CardDescription className="text-sm sm:text-base">
                   Вы станете капитаном и получите код для приглашения.
                 </CardDescription>
@@ -532,6 +574,7 @@ export function TeamPanel({
                       Название команды
                     </Label>
                     <Input
+                      ref={createNameRef}
                       id="team-create-name"
                       type="text"
                       value={teamName}
@@ -541,36 +584,38 @@ export function TeamPanel({
                         if (error) setError(null);
                         if (success) setSuccess(null);
                       }}
+                      disabled={isBusy}
                       placeholder="Например: Код и кофе"
+                      aria-required="true"
                       aria-invalid={Boolean(createNameError)}
-                      aria-describedby={
-                        createNameError
-                          ? "team-create-name-error"
-                          : "team-create-name-hint"
-                      }
+                      aria-describedby={joinDescribedBy(
+                        "team-create-name-hint",
+                        createNameError && "team-create-name-error"
+                      )}
                       className="min-h-11 text-base"
                     />
+                    <p
+                      id="team-create-name-hint"
+                      className="text-sm text-muted-foreground"
+                    >
+                      От 3 до 50 символов.
+                    </p>
                     {createNameError ? (
                       <p
                         id="team-create-name-error"
-                        className="text-sm text-destructive"
+                        role="alert"
+                        className="text-sm font-medium text-destructive"
                       >
                         {createNameError}
                       </p>
-                    ) : (
-                      <p
-                        id="team-create-name-hint"
-                        className="text-sm text-muted-foreground"
-                      >
-                        От 3 до 50 символов.
-                      </p>
-                    )}
+                    ) : null}
                   </div>
 
                   <Button
                     type="submit"
                     size="lg"
                     disabled={isBusy}
+                    aria-busy={pending === "create"}
                     className="min-h-11 w-full text-base"
                   >
                     {pending === "create" ? "Создаём..." : "Создать команду"}
@@ -581,7 +626,9 @@ export function TeamPanel({
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-xl">Войти по коду</CardTitle>
+                <h2 className="text-xl font-semibold leading-snug text-foreground">
+                  Войти по коду
+                </h2>
                 <CardDescription className="text-sm sm:text-base">
                   Попросите код у капитана команды.
                 </CardDescription>
@@ -597,6 +644,7 @@ export function TeamPanel({
                       Код приглашения
                     </Label>
                     <Input
+                      ref={joinCodeRef}
                       id="team-join-code"
                       type="text"
                       value={inviteCode}
@@ -606,31 +654,36 @@ export function TeamPanel({
                         if (error) setError(null);
                         if (success) setSuccess(null);
                       }}
+                      disabled={isBusy}
                       placeholder="ABC123"
                       maxLength={8}
+                      autoCapitalize="characters"
+                      autoCorrect="off"
+                      spellCheck={false}
+                      aria-required="true"
                       aria-invalid={Boolean(joinCodeError)}
-                      aria-describedby={
-                        joinCodeError
-                          ? "team-join-code-error"
-                          : "team-join-code-hint"
-                      }
+                      aria-describedby={joinDescribedBy(
+                        "team-join-code-hint",
+                        joinCodeError && "team-join-code-error"
+                      )}
                       className="min-h-11 font-mono text-base uppercase tracking-wider"
                     />
+                    <p
+                      id="team-join-code-hint"
+                      className="text-sm text-muted-foreground"
+                    >
+                      Код приглашения содержит от 6 до 8 символов: латинские
+                      буквы и цифры.
+                    </p>
                     {joinCodeError ? (
                       <p
                         id="team-join-code-error"
-                        className="text-sm text-destructive"
+                        role="alert"
+                        className="text-sm font-medium text-destructive"
                       >
                         {joinCodeError}
                       </p>
-                    ) : (
-                      <p
-                        id="team-join-code-hint"
-                        className="text-sm text-muted-foreground"
-                      >
-                        Код из 6 символов.
-                      </p>
-                    )}
+                    ) : null}
                   </div>
 
                   <Button
@@ -638,6 +691,7 @@ export function TeamPanel({
                     variant="outline"
                     size="lg"
                     disabled={isBusy}
+                    aria-busy={pending === "join"}
                     className="min-h-11 w-full text-base"
                   >
                     {pending === "join" ? "Входим..." : "Войти в команду"}
@@ -656,9 +710,9 @@ export function TeamPanel({
         <Card>
           <CardHeader className="gap-3">
             <div className="flex flex-wrap items-center justify-between gap-2.5">
-              <CardTitle className="text-2xl font-bold text-foreground">
+              <h2 className="min-w-0 break-words text-2xl font-bold leading-snug text-foreground">
                 {team.name}
-              </CardTitle>
+              </h2>
               <Badge
                 variant={team.viewerIsCaptain ? "default" : "secondary"}
                 className="gap-1.5 px-3 py-1 text-sm"
@@ -694,6 +748,7 @@ export function TeamPanel({
                     <Button
                       type="button"
                       variant="outline"
+                      disabled={isBusy}
                       onClick={() => handleCopyCode(team.inviteCode)}
                       className="min-h-11 px-4 text-base"
                     >
@@ -733,9 +788,9 @@ export function TeamPanel({
 
             <div className="space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <h2 className="text-lg font-semibold text-foreground">
+                <h3 className="text-lg font-semibold text-foreground">
                   Состав команды
-                </h2>
+                </h3>
                 <Badge variant="outline" className="gap-1.5 px-2.5 py-0.5 text-sm">
                   <Users className="size-3.5" aria-hidden="true" />
                   {formatParticipantsCount(team.memberCount)}
@@ -794,6 +849,7 @@ export function TeamPanel({
                     variant="destructive"
                     size="lg"
                     disabled={isBusy}
+                    aria-busy={pending === "disband"}
                     onClick={() => setIsDisbandDialogOpen(true)}
                     className="min-h-11 px-5 text-base"
                   >
@@ -808,6 +864,7 @@ export function TeamPanel({
                     variant="outline"
                     size="lg"
                     disabled={isBusy}
+                    aria-busy={pending === "leave"}
                     onClick={() => setIsLeaveDialogOpen(true)}
                     className="min-h-11 px-5 text-base"
                   >

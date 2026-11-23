@@ -1,17 +1,26 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { CheckCircle2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -40,6 +49,31 @@ const STEPS: { step: WizardStep; label: string }[] = [
   { step: 2, label: "Когда и где" },
   { step: 3, label: "Детали и проверка" },
 ];
+
+const STEP_FIELD_ORDER: Record<WizardStep, WizardFieldName[]> = {
+  1: ["title", "description"],
+  2: ["startDate", "endDate", "format", "location"],
+  3: ["organizerName", "maxParticipants", "prizePool", "tags"],
+};
+
+function joinDescribedBy(
+  ...ids: Array<string | false | null | undefined>
+): string | undefined {
+  const filtered = ids.filter(Boolean) as string[];
+  return filtered.length > 0 ? filtered.join(" ") : undefined;
+}
+
+function getFirstErrorField(
+  errors: WizardFieldErrors,
+  targetStep: WizardStep
+): WizardFieldName | null {
+  for (const field of STEP_FIELD_ORDER[targetStep]) {
+    if (errors[field]) {
+      return field;
+    }
+  }
+  return null;
+}
 
 const FORMAT_OPTIONS: {
   value: HackathonFormat;
@@ -142,12 +176,95 @@ export function CreateHackathonWizard({
   }
 
   const [step, setStep] = useState<WizardStep>(1);
-  const [formState, setFormState] = useState<WizardFormState>(() =>
+  const [maxVisitedStep, setMaxVisitedStep] = useState<WizardStep>(
+    isEditMode ? 3 : 1
+  );
+  const [initialSnapshot] = useState<WizardFormState>(() =>
     buildInitialFormState(mode, defaultOrganizerName, initialHackathon)
+  );
+  const [formState, setFormState] = useState<WizardFormState>(
+    () => initialSnapshot
   );
   const [fieldErrors, setFieldErrors] = useState<WizardFieldErrors>({});
   const [serverError, setServerError] = useState<string | null>(null);
+  const [saveSuccessMessage, setSaveSuccessMessage] = useState<string | null>(
+    null
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
+
+  const stepHeadingRef = useRef<HTMLHeadingElement>(null);
+  const titleRef = useRef<HTMLInputElement>(null);
+  const descriptionRef = useRef<HTMLTextAreaElement>(null);
+  const startDateRef = useRef<HTMLInputElement>(null);
+  const endDateRef = useRef<HTMLInputElement>(null);
+  const formatRef = useRef<HTMLInputElement>(null);
+  const locationRef = useRef<HTMLInputElement>(null);
+  const organizerNameRef = useRef<HTMLInputElement>(null);
+  const maxParticipantsRef = useRef<HTMLInputElement>(null);
+  const prizePoolRef = useRef<HTMLInputElement>(null);
+  const tagsRef = useRef<HTMLInputElement>(null);
+
+  const focusNonceRef = useRef(0);
+  const handledFocusNonceRef = useRef(0);
+  const [pendingFocus, setPendingFocus] = useState<
+    | { kind: "field"; step: WizardStep; field: WizardFieldName; nonce: number }
+    | { kind: "heading"; step: WizardStep; nonce: number }
+    | null
+  >(null);
+
+  const cancelHref = isEditMode ? "/my-hackathons" : "/hackathons";
+  const isDirty = (
+    Object.keys(initialSnapshot) as Array<keyof WizardFormState>
+  ).some((key) => formState[key] !== initialSnapshot[key]);
+
+  function scheduleFieldFocus(targetStep: WizardStep, field: WizardFieldName) {
+    focusNonceRef.current += 1;
+    setPendingFocus({
+      kind: "field",
+      step: targetStep,
+      field,
+      nonce: focusNonceRef.current,
+    });
+  }
+
+  function scheduleHeadingFocus(targetStep: WizardStep) {
+    focusNonceRef.current += 1;
+    setPendingFocus({
+      kind: "heading",
+      step: targetStep,
+      nonce: focusNonceRef.current,
+    });
+  }
+
+  useEffect(() => {
+    if (isSubmitting || !pendingFocus || pendingFocus.step !== step) {
+      return;
+    }
+    if (handledFocusNonceRef.current === pendingFocus.nonce) {
+      return;
+    }
+    handledFocusNonceRef.current = pendingFocus.nonce;
+
+    if (pendingFocus.kind === "heading") {
+      stepHeadingRef.current?.focus({ preventScroll: true });
+      return;
+    }
+
+    const fieldElementMap: Record<WizardFieldName, HTMLElement | null> = {
+      title: titleRef.current,
+      description: descriptionRef.current,
+      startDate: startDateRef.current,
+      endDate: endDateRef.current,
+      format: formatRef.current,
+      location: locationRef.current,
+      organizerName: organizerNameRef.current,
+      maxParticipants: maxParticipantsRef.current,
+      prizePool: prizePoolRef.current,
+      tags: tagsRef.current,
+    };
+    fieldElementMap[pendingFocus.field]?.focus({ preventScroll: true });
+  }, [step, isSubmitting, pendingFocus]);
 
   function updateField<K extends keyof WizardFormState>(
     key: K,
@@ -165,18 +282,34 @@ export function CreateHackathonWizard({
     if (serverError) {
       setServerError(null);
     }
+    if (saveSuccessMessage) {
+      setSaveSuccessMessage(null);
+    }
+  }
+
+  function goToStep(targetStep: WizardStep) {
+    setStep(targetStep);
+    setMaxVisitedStep((prev) => (targetStep > prev ? targetStep : prev));
+    scheduleHeadingFocus(targetStep);
   }
 
   function handleNextStep() {
+    if (isSubmitting) {
+      return;
+    }
     setServerError(null);
     if (step === 1) {
       const errors = validateStep1(formState);
       if (Object.keys(errors).length > 0) {
         setFieldErrors(errors);
+        const firstField = getFirstErrorField(errors, 1);
+        if (firstField) {
+          scheduleFieldFocus(1, firstField);
+        }
         return;
       }
       setFieldErrors({});
-      setStep(2);
+      goToStep(2);
       return;
     }
 
@@ -184,34 +317,103 @@ export function CreateHackathonWizard({
       const errors = validateStep2(formState, mode);
       if (Object.keys(errors).length > 0) {
         setFieldErrors(errors);
+        const firstField = getFirstErrorField(errors, 2);
+        if (firstField) {
+          scheduleFieldFocus(2, firstField);
+        }
         return;
       }
       setFieldErrors({});
-      setStep(3);
+      goToStep(3);
     }
   }
 
   function handlePrevStep() {
+    if (isSubmitting) {
+      return;
+    }
     setServerError(null);
     setFieldErrors({});
     if (step === 2) {
-      setStep(1);
+      goToStep(1);
     } else if (step === 3) {
-      setStep(2);
+      goToStep(2);
     }
   }
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (isSubmitting) {
+  function handleStepSelect(targetStep: WizardStep) {
+    if (isSubmitting || targetStep === step) {
       return;
     }
 
     setServerError(null);
+
+    if (isEditMode) {
+      goToStep(targetStep);
+      return;
+    }
+
+    if (targetStep > maxVisitedStep) {
+      return;
+    }
+
+    if (targetStep < step) {
+      setFieldErrors({});
+      goToStep(targetStep);
+      return;
+    }
+
+    if (step === 1) {
+      const step1Errors = validateStep1(formState);
+      if (Object.keys(step1Errors).length > 0) {
+        setFieldErrors(step1Errors);
+        const firstField = getFirstErrorField(step1Errors, 1);
+        if (firstField) {
+          scheduleFieldFocus(1, firstField);
+        }
+        return;
+      }
+    }
+
+    if (targetStep === 3) {
+      const step2Errors = validateStep2(formState, mode);
+      if (Object.keys(step2Errors).length > 0) {
+        setFieldErrors(step2Errors);
+        setStep(2);
+        const firstField = getFirstErrorField(step2Errors, 2);
+        if (firstField) {
+          scheduleFieldFocus(2, firstField);
+        }
+        return;
+      }
+    }
+
+    setFieldErrors({});
+    goToStep(targetStep);
+  }
+
+  function handleCancelClick() {
+    if (isSubmitting) {
+      return;
+    }
+    if (isDirty) {
+      setIsCancelDialogOpen(true);
+      return;
+    }
+    router.push(cancelHref);
+  }
+
+  async function submitHackathon() {
+    setServerError(null);
+    setSaveSuccessMessage(null);
     const { errors, firstErrorStep } = validateAllSteps(formState, mode);
     if (firstErrorStep !== null) {
       setFieldErrors(errors);
       setStep(firstErrorStep);
+      const firstField = getFirstErrorField(errors, firstErrorStep);
+      if (firstField) {
+        scheduleFieldFocus(firstErrorStep, firstField);
+      }
       return;
     }
 
@@ -293,6 +495,11 @@ export function CreateHackathonWizard({
         (isEditMode ? response.status === 200 : response.status === 201) &&
         data.slug
       ) {
+        setSaveSuccessMessage(
+          isEditMode
+            ? "Изменения сохранены. Переходим на страницу хакатона..."
+            : "Хакатон создан. Переходим на страницу хакатона..."
+        );
         router.push(`/hackathons/${data.slug}`);
         router.refresh();
         return;
@@ -335,6 +542,10 @@ export function CreateHackathonWizard({
           const errorStep = getFirstStepForErrors(mappedErrors);
           if (errorStep !== null) {
             setStep(errorStep);
+            const firstField = getFirstErrorField(mappedErrors, errorStep);
+            if (firstField) {
+              scheduleFieldFocus(errorStep, firstField);
+            }
           }
           setServerError("Проверьте поля формы.");
         } else {
@@ -363,6 +574,20 @@ export function CreateHackathonWizard({
     }
   }
 
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (isSubmitting) {
+      return;
+    }
+
+    if (step === 1 || step === 2) {
+      handleNextStep();
+      return;
+    }
+
+    await submitHackathon();
+  }
+
   const parsedTags = parseTagsInput(formState.tagsInput);
   const resolvedLocation =
     formState.format === "online"
@@ -385,41 +610,71 @@ export function CreateHackathonWizard({
       ? `${formState.description.trim().slice(0, 160)}...`
       : formState.description.trim();
 
+  const titleLength = formState.title.trim().length;
+  const descriptionLength = formState.description.trim().length;
+
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
-      <div className="flex flex-col gap-3">
+      <nav aria-label="Шаги формы" className="flex flex-col gap-3">
         <p className="text-sm font-medium text-muted-foreground">
           Шаг {step} из 3
         </p>
 
-        <ol className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+        <ol className="grid grid-cols-3 gap-1.5 sm:gap-2">
           {STEPS.map((item) => {
             const isCurrent = item.step === step;
+            const isVisited = isEditMode || item.step <= maxVisitedStep;
             const isCompleted = item.step < step;
+            const isStepDisabled = isSubmitting || !isVisited;
+
             return (
-              <li
-                key={item.step}
-                aria-current={isCurrent ? "step" : undefined}
-                className={cn(
-                  "flex items-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-medium",
-                  isCurrent &&
-                    "border-primary bg-primary text-primary-foreground",
-                  isCompleted && "border-primary/30 bg-accent text-foreground",
-                  !isCurrent &&
-                    !isCompleted &&
-                    "border-border bg-card text-muted-foreground"
-                )}
-              >
-                <span className="font-bold">{item.step}.</span>
-                <span>{item.label}</span>
+              <li key={item.step} className="min-w-0">
+                <button
+                  type="button"
+                  aria-current={isCurrent ? "step" : undefined}
+                  disabled={isStepDisabled}
+                  onClick={() => handleStepSelect(item.step)}
+                  className={cn(
+                    "flex min-h-11 w-full flex-col items-start justify-center gap-0.5 rounded-lg border px-2.5 py-2 text-left text-xs font-medium leading-tight transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 sm:flex-row sm:items-center sm:justify-start sm:gap-2 sm:px-3 sm:py-2.5 sm:text-sm",
+                    isCurrent &&
+                      "border-primary bg-primary text-primary-foreground",
+                    !isCurrent &&
+                      isCompleted &&
+                      "border-primary/30 bg-accent text-foreground hover:bg-accent/80",
+                    !isCurrent &&
+                      !isCompleted &&
+                      isVisited &&
+                      "border-border bg-card text-foreground hover:bg-muted/60",
+                    !isCurrent &&
+                      !isVisited &&
+                      "border-border bg-card text-muted-foreground",
+                    isStepDisabled && !isCurrent && "cursor-not-allowed opacity-60",
+                    isSubmitting && isCurrent && "cursor-not-allowed opacity-80"
+                  )}
+                >
+                  <span className="font-bold">Шаг {item.step}</span>
+                  <span className="min-w-0 break-words">{item.label}</span>
+                </button>
               </li>
             );
           })}
         </ol>
-      </div>
+      </nav>
+
+      {saveSuccessMessage && (
+        <Alert
+          role="status"
+          className="border-primary/30 bg-primary/10 p-4 text-foreground"
+        >
+          <CheckCircle2 className="size-4 text-primary" aria-hidden="true" />
+          <AlertDescription className="text-base font-medium">
+            {saveSuccessMessage}
+          </AlertDescription>
+        </Alert>
+      )}
 
       {serverError && (
-        <Alert variant="destructive" className="p-4">
+        <Alert variant="destructive" role="alert" className="p-4">
           <AlertDescription className="text-base">
             {serverError}
           </AlertDescription>
@@ -428,11 +683,15 @@ export function CreateHackathonWizard({
 
       <Card className="p-2">
         <CardHeader className="gap-2">
-          <CardTitle className="text-2xl font-bold sm:text-3xl">
+          <h2
+            ref={stepHeadingRef}
+            tabIndex={-1}
+            className="text-2xl font-bold leading-snug tracking-tight text-foreground focus:outline-none sm:text-3xl"
+          >
             {step === 1 && "Расскажите о хакатоне"}
             {step === 2 && "Когда и где проходит хакатон"}
             {step === 3 && "Последние штрихи"}
-          </CardTitle>
+          </h2>
           <CardDescription className="text-base">
             {step === 1 &&
               "Название и описание помогут участникам понять, что вы хотите создать."}
@@ -444,7 +703,11 @@ export function CreateHackathonWizard({
         </CardHeader>
 
         <CardContent>
-          <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+          <form
+            onSubmit={handleSubmit}
+            noValidate
+            className="flex flex-col gap-6"
+          >
             {step === 1 && (
               <>
                 <div className="flex flex-col gap-2">
@@ -452,11 +715,20 @@ export function CreateHackathonWizard({
                     <Label htmlFor="wizard-title" className="text-base">
                       Название хакатона
                     </Label>
-                    <span className="text-sm text-muted-foreground">
-                      {formState.title.trim().length} / 120
+                    <span
+                      id="wizard-title-count"
+                      className={cn(
+                        "text-sm",
+                        titleLength > 120
+                          ? "font-medium text-destructive"
+                          : "text-muted-foreground"
+                      )}
+                    >
+                      {titleLength} / 120
                     </span>
                   </div>
                   <Input
+                    ref={titleRef}
                     id="wizard-title"
                     type="text"
                     value={formState.title}
@@ -464,12 +736,14 @@ export function CreateHackathonWizard({
                       updateField("title", event.target.value, "title")
                     }
                     placeholder="Например: Хакатон городских сервисов"
+                    disabled={isSubmitting}
+                    aria-required="true"
                     aria-invalid={Boolean(fieldErrors.title)}
-                    aria-describedby={
-                      fieldErrors.title
-                        ? "wizard-title-error"
-                        : "wizard-title-hint"
-                    }
+                    aria-describedby={joinDescribedBy(
+                      "wizard-title-hint",
+                      "wizard-title-count",
+                      fieldErrors.title && "wizard-title-error"
+                    )}
                     className="min-h-11 text-base"
                   />
                   <p
@@ -481,6 +755,7 @@ export function CreateHackathonWizard({
                   {fieldErrors.title && (
                     <p
                       id="wizard-title-error"
+                      role="alert"
                       className="text-sm font-medium text-destructive"
                     >
                       {fieldErrors.title}
@@ -493,11 +768,20 @@ export function CreateHackathonWizard({
                     <Label htmlFor="wizard-description" className="text-base">
                       Описание
                     </Label>
-                    <span className="text-sm text-muted-foreground">
-                      {formState.description.trim().length} / 2000
+                    <span
+                      id="wizard-description-count"
+                      className={cn(
+                        "text-sm",
+                        descriptionLength > 2000
+                          ? "font-medium text-destructive"
+                          : "text-muted-foreground"
+                      )}
+                    >
+                      {descriptionLength} / 2000
                     </span>
                   </div>
                   <textarea
+                    ref={descriptionRef}
                     id="wizard-description"
                     rows={5}
                     value={formState.description}
@@ -509,13 +793,15 @@ export function CreateHackathonWizard({
                       )
                     }
                     placeholder="Что нужно сделать? Для кого этот хакатон? Какой результат ожидается?"
+                    disabled={isSubmitting}
+                    aria-required="true"
                     aria-invalid={Boolean(fieldErrors.description)}
-                    aria-describedby={
-                      fieldErrors.description
-                        ? "wizard-description-error"
-                        : "wizard-description-hint"
-                    }
-                    className="min-h-32 w-full rounded-lg border border-input bg-transparent px-3 py-2.5 text-base text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20"
+                    aria-describedby={joinDescribedBy(
+                      "wizard-description-hint",
+                      "wizard-description-count",
+                      fieldErrors.description && "wizard-description-error"
+                    )}
+                    className="min-h-32 w-full rounded-lg border border-input bg-transparent px-3 py-2.5 text-base text-foreground transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-muted disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20"
                   />
                   <p
                     id="wizard-description-hint"
@@ -526,6 +812,7 @@ export function CreateHackathonWizard({
                   {fieldErrors.description && (
                     <p
                       id="wizard-description-error"
+                      role="alert"
                       className="text-sm font-medium text-destructive"
                     >
                       {fieldErrors.description}
@@ -534,19 +821,20 @@ export function CreateHackathonWizard({
                 </div>
 
                 <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-                  <Link
-                    href={isEditMode ? "/my-hackathons" : "/hackathons"}
-                    className={cn(
-                      buttonVariants({ variant: "outline", size: "lg" }),
-                      "min-h-11 px-5 text-base"
-                    )}
-                  >
-                    Отмена
-                  </Link>
                   <Button
                     type="button"
+                    variant="outline"
                     size="lg"
-                    onClick={handleNextStep}
+                    disabled={isSubmitting}
+                    onClick={handleCancelClick}
+                    className="min-h-11 px-5 text-base"
+                  >
+                    Отмена
+                  </Button>
+                  <Button
+                    type="submit"
+                    size="lg"
+                    disabled={isSubmitting}
                     className="min-h-11 px-6 text-base"
                   >
                     Далее
@@ -563,6 +851,7 @@ export function CreateHackathonWizard({
                       Начало
                     </Label>
                     <Input
+                      ref={startDateRef}
                       id="wizard-start-date"
                       type="datetime-local"
                       value={formState.startDate}
@@ -573,23 +862,26 @@ export function CreateHackathonWizard({
                           "startDate"
                         )
                       }
+                      disabled={isSubmitting}
+                      aria-required="true"
                       aria-invalid={Boolean(fieldErrors.startDate)}
-                      aria-describedby={
-                        fieldErrors.startDate
-                          ? "wizard-start-error"
-                          : "wizard-start-hint"
-                      }
+                      aria-describedby={joinDescribedBy(
+                        "wizard-start-hint",
+                        fieldErrors.startDate && "wizard-start-error"
+                      )}
                       className="min-h-11 text-base"
                     />
                     <p
                       id="wizard-start-hint"
                       className="text-sm text-muted-foreground"
                     >
-                      Когда участники смогут начать работу.
+                      Когда участники смогут начать работу. По вашему местному
+                      времени.
                     </p>
                     {fieldErrors.startDate && (
                       <p
                         id="wizard-start-error"
+                        role="alert"
                         className="text-sm font-medium text-destructive"
                       >
                         {fieldErrors.startDate}
@@ -602,29 +894,32 @@ export function CreateHackathonWizard({
                       Окончание
                     </Label>
                     <Input
+                      ref={endDateRef}
                       id="wizard-end-date"
                       type="datetime-local"
                       value={formState.endDate}
                       onChange={(event) =>
                         updateField("endDate", event.target.value, "endDate")
                       }
+                      disabled={isSubmitting}
+                      aria-required="true"
                       aria-invalid={Boolean(fieldErrors.endDate)}
-                      aria-describedby={
-                        fieldErrors.endDate
-                          ? "wizard-end-error"
-                          : "wizard-end-hint"
-                      }
+                      aria-describedby={joinDescribedBy(
+                        "wizard-end-hint",
+                        fieldErrors.endDate && "wizard-end-error"
+                      )}
                       className="min-h-11 text-base"
                     />
                     <p
                       id="wizard-end-hint"
                       className="text-sm text-muted-foreground"
                     >
-                      Когда нужно сдать проект.
+                      Когда нужно сдать проект. По вашему местному времени.
                     </p>
                     {fieldErrors.endDate && (
                       <p
                         id="wizard-end-error"
+                        role="alert"
                         className="text-sm font-medium text-destructive"
                       >
                         {fieldErrors.endDate}
@@ -633,13 +928,27 @@ export function CreateHackathonWizard({
                   </div>
                 </div>
 
-                <fieldset className="flex flex-col gap-3">
+                <fieldset
+                  aria-required="true"
+                  aria-invalid={Boolean(fieldErrors.format)}
+                  aria-describedby={joinDescribedBy(
+                    "wizard-format-hint",
+                    fieldErrors.format && "wizard-format-error"
+                  )}
+                  className="flex flex-col gap-3"
+                >
                   <legend className="text-base font-medium text-foreground">
                     Формат
                   </legend>
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                     {FORMAT_OPTIONS.map((option) => {
                       const isSelected = formState.format === option.value;
+                      const shouldAttachFormatRef =
+                        isSelected ||
+                        (!FORMAT_OPTIONS.some(
+                          (item) => item.value === formState.format
+                        ) &&
+                          option.value === "online");
                       return (
                         <label
                           key={option.value}
@@ -647,15 +956,18 @@ export function CreateHackathonWizard({
                             "flex cursor-pointer flex-col gap-1 rounded-xl border p-4 transition-colors",
                             isSelected
                               ? "border-primary bg-accent/50"
-                              : "border-border bg-background hover:bg-muted/50"
+                              : "border-border bg-background hover:bg-muted/50",
+                            isSubmitting && "pointer-events-none opacity-60"
                           )}
                         >
                           <div className="flex items-center gap-2">
                             <input
+                              ref={shouldAttachFormatRef ? formatRef : undefined}
                               type="radio"
                               name="format"
                               value={option.value}
                               checked={isSelected}
+                              disabled={isSubmitting}
                               onChange={() =>
                                 updateField("format", option.value, "format")
                               }
@@ -672,8 +984,18 @@ export function CreateHackathonWizard({
                       );
                     })}
                   </div>
+                  <p
+                    id="wizard-format-hint"
+                    className="text-sm text-muted-foreground"
+                  >
+                    Выберите, как участники будут подключаться к хакатону.
+                  </p>
                   {fieldErrors.format && (
-                    <p className="text-sm font-medium text-destructive">
+                    <p
+                      id="wizard-format-error"
+                      role="alert"
+                      className="text-sm font-medium text-destructive"
+                    >
                       {fieldErrors.format}
                     </p>
                   )}
@@ -690,15 +1012,20 @@ export function CreateHackathonWizard({
                         type="text"
                         value="Онлайн"
                         disabled
+                        aria-describedby="wizard-location-online-hint"
                         className="min-h-11 text-base"
                       />
-                      <p className="text-sm text-muted-foreground">
+                      <p
+                        id="wizard-location-online-hint"
+                        className="text-sm text-muted-foreground"
+                      >
                         Для онлайн-хакатона место указывается автоматически.
                       </p>
                     </>
                   ) : (
                     <>
                       <Input
+                        ref={locationRef}
                         id="wizard-location"
                         type="text"
                         value={formState.location}
@@ -709,17 +1036,18 @@ export function CreateHackathonWizard({
                             "location"
                           )
                         }
+                        disabled={isSubmitting}
                         placeholder={
                           formState.format === "hybrid"
                             ? "Онлайн + Москва"
                             : "Например: Москва, Технопарк"
                         }
+                        aria-required="true"
                         aria-invalid={Boolean(fieldErrors.location)}
-                        aria-describedby={
-                          fieldErrors.location
-                            ? "wizard-location-error"
-                            : "wizard-location-hint"
-                        }
+                        aria-describedby={joinDescribedBy(
+                          "wizard-location-hint",
+                          fieldErrors.location && "wizard-location-error"
+                        )}
                         className="min-h-11 text-base"
                       />
                       <p
@@ -731,6 +1059,7 @@ export function CreateHackathonWizard({
                       {fieldErrors.location && (
                         <p
                           id="wizard-location-error"
+                          role="alert"
                           className="text-sm font-medium text-destructive"
                         >
                           {fieldErrors.location}
@@ -745,15 +1074,16 @@ export function CreateHackathonWizard({
                     type="button"
                     variant="outline"
                     size="lg"
+                    disabled={isSubmitting}
                     onClick={handlePrevStep}
                     className="min-h-11 px-5 text-base"
                   >
                     Назад
                   </Button>
                   <Button
-                    type="button"
+                    type="submit"
                     size="lg"
-                    onClick={handleNextStep}
+                    disabled={isSubmitting}
                     className="min-h-11 px-6 text-base"
                   >
                     Далее
@@ -770,6 +1100,7 @@ export function CreateHackathonWizard({
                       Организатор
                     </Label>
                     <Input
+                      ref={organizerNameRef}
                       id="wizard-organizer"
                       type="text"
                       value={formState.organizerName}
@@ -783,11 +1114,10 @@ export function CreateHackathonWizard({
                       placeholder="Ваше имя или название организации"
                       disabled={isSubmitting}
                       aria-invalid={Boolean(fieldErrors.organizerName)}
-                      aria-describedby={
-                        fieldErrors.organizerName
-                          ? "wizard-organizer-error"
-                          : "wizard-organizer-hint"
-                      }
+                      aria-describedby={joinDescribedBy(
+                        "wizard-organizer-hint",
+                        fieldErrors.organizerName && "wizard-organizer-error"
+                      )}
                       className="min-h-11 text-base"
                     />
                     <p
@@ -799,6 +1129,7 @@ export function CreateHackathonWizard({
                     {fieldErrors.organizerName && (
                       <p
                         id="wizard-organizer-error"
+                        role="alert"
                         className="text-sm font-medium text-destructive"
                       >
                         {fieldErrors.organizerName}
@@ -814,6 +1145,7 @@ export function CreateHackathonWizard({
                       Максимум участников
                     </Label>
                     <Input
+                      ref={maxParticipantsRef}
                       id="wizard-max-participants"
                       type="number"
                       min={1}
@@ -829,11 +1161,10 @@ export function CreateHackathonWizard({
                       placeholder="Например: 200"
                       disabled={isSubmitting}
                       aria-invalid={Boolean(fieldErrors.maxParticipants)}
-                      aria-describedby={
-                        fieldErrors.maxParticipants
-                          ? "wizard-max-error"
-                          : "wizard-max-hint"
-                      }
+                      aria-describedby={joinDescribedBy(
+                        "wizard-max-hint",
+                        fieldErrors.maxParticipants && "wizard-max-error"
+                      )}
                       className="min-h-11 text-base"
                     />
                     <p
@@ -845,6 +1176,7 @@ export function CreateHackathonWizard({
                     {fieldErrors.maxParticipants && (
                       <p
                         id="wizard-max-error"
+                        role="alert"
                         className="text-sm font-medium text-destructive"
                       >
                         {fieldErrors.maxParticipants}
@@ -858,6 +1190,7 @@ export function CreateHackathonWizard({
                     Призовой фонд
                   </Label>
                   <Input
+                    ref={prizePoolRef}
                     id="wizard-prize"
                     type="text"
                     value={formState.prizePool}
@@ -867,11 +1200,10 @@ export function CreateHackathonWizard({
                     placeholder="Например: 500 000 ₽"
                     disabled={isSubmitting}
                     aria-invalid={Boolean(fieldErrors.prizePool)}
-                    aria-describedby={
-                      fieldErrors.prizePool
-                        ? "wizard-prize-error"
-                        : "wizard-prize-hint"
-                    }
+                    aria-describedby={joinDescribedBy(
+                      "wizard-prize-hint",
+                      fieldErrors.prizePool && "wizard-prize-error"
+                    )}
                     className="min-h-11 text-base"
                   />
                   <p
@@ -883,6 +1215,7 @@ export function CreateHackathonWizard({
                   {fieldErrors.prizePool && (
                     <p
                       id="wizard-prize-error"
+                      role="alert"
                       className="text-sm font-medium text-destructive"
                     >
                       {fieldErrors.prizePool}
@@ -895,6 +1228,7 @@ export function CreateHackathonWizard({
                     Темы и технологии
                   </Label>
                   <Input
+                    ref={tagsRef}
                     id="wizard-tags"
                     type="text"
                     value={formState.tagsInput}
@@ -904,9 +1238,10 @@ export function CreateHackathonWizard({
                     placeholder="Например: AI, Дизайн, Python"
                     disabled={isSubmitting}
                     aria-invalid={Boolean(fieldErrors.tags)}
-                    aria-describedby={
-                      fieldErrors.tags ? "wizard-tags-error" : "wizard-tags-hint"
-                    }
+                    aria-describedby={joinDescribedBy(
+                      "wizard-tags-hint",
+                      fieldErrors.tags && "wizard-tags-error"
+                    )}
                     className="min-h-11 text-base"
                   />
                   <p
@@ -918,6 +1253,7 @@ export function CreateHackathonWizard({
                   {fieldErrors.tags && (
                     <p
                       id="wizard-tags-error"
+                      role="alert"
                       className="text-sm font-medium text-destructive"
                     >
                       {fieldErrors.tags}
@@ -941,80 +1277,82 @@ export function CreateHackathonWizard({
                 <Separator />
 
                 <div className="flex flex-col gap-3 rounded-xl border bg-muted/30 p-4">
-                  <h2 className="text-lg font-semibold text-foreground">
+                  <h3 className="text-lg font-semibold text-foreground">
                     {isEditMode
                       ? "Проверьте перед сохранением"
                       : "Проверьте перед созданием"}
-                  </h2>
+                  </h3>
                   <dl className="flex flex-col gap-2 text-base">
-                    <div>
+                    <div className="min-w-0">
                       <dt className="text-sm text-muted-foreground">
                         Название
                       </dt>
-                      <dd className="font-medium text-foreground">
+                      <dd className="break-words font-medium text-foreground">
                         {formState.title.trim()}
                       </dd>
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <dt className="text-sm text-muted-foreground">
                         Описание
                       </dt>
-                      <dd className="text-foreground">{descriptionPreview}</dd>
+                      <dd className="break-words text-foreground">
+                        {descriptionPreview}
+                      </dd>
                     </div>
                     <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                      <div>
+                      <div className="min-w-0">
                         <dt className="text-sm text-muted-foreground">Даты</dt>
-                        <dd className="font-medium text-foreground">
+                        <dd className="break-words font-medium text-foreground">
                           {previewDateRange}
                         </dd>
                       </div>
-                      <div>
+                      <div className="min-w-0">
                         <dt className="text-sm text-muted-foreground">
                           Формат
                         </dt>
-                        <dd className="font-medium text-foreground">
+                        <dd className="break-words font-medium text-foreground">
                           {HACKATHON_FORMAT_CONFIG[formState.format].label}
                         </dd>
                       </div>
-                      <div>
+                      <div className="min-w-0">
                         <dt className="text-sm text-muted-foreground">Место</dt>
-                        <dd className="font-medium text-foreground">
+                        <dd className="break-words font-medium text-foreground">
                           {resolvedLocation}
                         </dd>
                       </div>
                     </div>
                     {formState.organizerName.trim() && (
-                      <div>
+                      <div className="min-w-0">
                         <dt className="text-sm text-muted-foreground">
                           Организатор
                         </dt>
-                        <dd className="font-medium text-foreground">
+                        <dd className="break-words font-medium text-foreground">
                           {formState.organizerName.trim()}
                         </dd>
                       </div>
                     )}
                     {formState.maxParticipants.trim() && (
-                      <div>
+                      <div className="min-w-0">
                         <dt className="text-sm text-muted-foreground">
                           Максимум участников
                         </dt>
-                        <dd className="font-medium text-foreground">
+                        <dd className="break-words font-medium text-foreground">
                           {formState.maxParticipants.trim()}
                         </dd>
                       </div>
                     )}
                     {formState.prizePool.trim() && (
-                      <div>
+                      <div className="min-w-0">
                         <dt className="text-sm text-muted-foreground">
                           Призовой фонд
                         </dt>
-                        <dd className="font-medium text-foreground">
+                        <dd className="break-words font-medium text-foreground">
                           {formState.prizePool.trim()}
                         </dd>
                       </div>
                     )}
                     {parsedTags.length > 0 && (
-                      <div>
+                      <div className="min-w-0">
                         <dt className="text-sm text-muted-foreground">Теги</dt>
                         <dd className="mt-1 flex flex-wrap gap-1.5">
                           {parsedTags.map((tag) => (
@@ -1047,6 +1385,7 @@ export function CreateHackathonWizard({
                     type="submit"
                     size="lg"
                     disabled={isSubmitting}
+                    aria-busy={isSubmitting}
                     className="min-h-11 px-6 text-base"
                   >
                     {isEditMode
@@ -1063,6 +1402,38 @@ export function CreateHackathonWizard({
           </form>
         </CardContent>
       </Card>
+
+      <AlertDialog
+        open={isCancelDialogOpen}
+        onOpenChange={(nextOpen) => {
+          if (!isSubmitting) {
+            setIsCancelDialogOpen(nextOpen);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Выйти без сохранения?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Введённые данные не сохранятся. Вы уверены, что хотите покинуть
+              форму?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isSubmitting}>
+              Остаться
+            </AlertDialogCancel>
+            <AlertDialogAction
+              type="button"
+              variant="destructive"
+              disabled={isSubmitting}
+              onClick={() => router.push(cancelHref)}
+            >
+              Выйти
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

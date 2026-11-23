@@ -10,6 +10,31 @@ export const metadata: Metadata = {
   description: "Создайте хакатон по простым шагам.",
 };
 
+function CreateHackathonSkeleton() {
+  return (
+    <div
+      role="status"
+      aria-busy="true"
+      className="mx-auto flex w-full max-w-3xl flex-col gap-6"
+    >
+      <span className="sr-only">Загружаем форму создания хакатона...</span>
+      <div className="flex flex-col gap-2">
+        <div className="h-10 w-64 animate-pulse rounded-lg bg-muted/50 motion-reduce:animate-none" />
+        <div className="h-6 w-full max-w-lg animate-pulse rounded-lg bg-muted/40 motion-reduce:animate-none" />
+      </div>
+      <div className="flex flex-col gap-3">
+        <div className="h-5 w-24 animate-pulse rounded bg-muted/50 motion-reduce:animate-none" />
+        <div className="grid grid-cols-3 gap-2">
+          <div className="h-11 animate-pulse rounded-lg border border-border bg-muted/40 motion-reduce:animate-none" />
+          <div className="h-11 animate-pulse rounded-lg border border-border bg-muted/40 motion-reduce:animate-none" />
+          <div className="h-11 animate-pulse rounded-lg border border-border bg-muted/40 motion-reduce:animate-none" />
+        </div>
+      </div>
+      <div className="h-96 animate-pulse rounded-xl border border-border bg-muted/40 motion-reduce:animate-none" />
+    </div>
+  );
+}
+
 async function CreateHackathonContent() {
   await connection();
   const session = await getSession();
@@ -40,11 +65,7 @@ async function CreateHackathonContent() {
 
 export default function CreateHackathonPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="py-12 text-base text-muted-foreground">Загрузка...</div>
-      }
-    >
+    <Suspense fallback={<CreateHackathonSkeleton />}>
       <CreateHackathonContent />
     </Suspense>
   );

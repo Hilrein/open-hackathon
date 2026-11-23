@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Calendar,
@@ -29,6 +29,7 @@ import { Separator } from "@/components/ui/separator";
 import type { SubmissionDTO } from "@/lib/hackathon-submissions";
 import { submissionSchema } from "@/lib/submission-schema";
 import type { HackathonStatus } from "@/types/hackathon";
+import { cn } from "cn";
 
 interface SubmissionFormProps {
   slug: string;
@@ -80,6 +81,31 @@ function getHostname(url: string): string {
   }
 }
 
+function joinDescribedBy(
+  ...ids: Array<string | false | null | undefined>
+): string | undefined {
+  const filtered = ids.filter(Boolean) as string[];
+  return filtered.length > 0 ? filtered.join(" ") : undefined;
+}
+
+const SUBMISSION_FIELD_ORDER: SubmissionFieldName[] = [
+  "title",
+  "description",
+  "repoUrl",
+  "demoUrl",
+];
+
+function getFirstSubmissionErrorField(
+  errors: SubmissionFieldErrors
+): SubmissionFieldName | null {
+  for (const field of SUBMISSION_FIELD_ORDER) {
+    if (errors[field]) {
+      return field;
+    }
+  }
+  return null;
+}
+
 export function SubmissionForm({
   slug,
   hackathonTitle,
@@ -109,8 +135,42 @@ export function SubmissionForm({
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [isWithdrawDialogOpen, setIsWithdrawDialogOpen] = useState(false);
 
+  const titleRef = useRef<HTMLInputElement>(null);
+  const descriptionRef = useRef<HTMLTextAreaElement>(null);
+  const repoUrlRef = useRef<HTMLInputElement>(null);
+  const demoUrlRef = useRef<HTMLInputElement>(null);
+  const focusNonceRef = useRef(0);
+  const handledFocusNonceRef = useRef(0);
+  const [pendingFocus, setPendingFocus] = useState<{
+    field: SubmissionFieldName;
+    nonce: number;
+  } | null>(null);
+
   const isReadOnly = !canEdit;
   const isBusy = isSaving || isWithdrawing;
+
+  function scheduleFieldFocus(field: SubmissionFieldName) {
+    focusNonceRef.current += 1;
+    setPendingFocus({ field, nonce: focusNonceRef.current });
+  }
+
+  useEffect(() => {
+    if (isBusy || !pendingFocus) {
+      return;
+    }
+    if (handledFocusNonceRef.current === pendingFocus.nonce) {
+      return;
+    }
+    handledFocusNonceRef.current = pendingFocus.nonce;
+
+    const fieldElementMap: Record<SubmissionFieldName, HTMLElement | null> = {
+      title: titleRef.current,
+      description: descriptionRef.current,
+      repoUrl: repoUrlRef.current,
+      demoUrl: demoUrlRef.current,
+    };
+    fieldElementMap[pendingFocus.field]?.focus({ preventScroll: true });
+  }, [isBusy, pendingFocus]);
   const redirectToSignInUrl = `/sign-in?redirect=${encodeURIComponent(
     `/my-participations/${slug}/work`
   )}`;
@@ -175,6 +235,10 @@ export function SubmissionForm({
       }
       setFieldErrors(mapped);
       setErrorMessage("Проверьте поля формы.");
+      const firstErrorField = getFirstSubmissionErrorField(mapped);
+      if (firstErrorField) {
+        scheduleFieldFocus(firstErrorField);
+      }
       return;
     }
 
@@ -257,6 +321,10 @@ export function SubmissionForm({
           }
           setFieldErrors(mapped);
           setErrorMessage("Проверьте поля формы.");
+          const firstErrorField = getFirstSubmissionErrorField(mapped);
+          if (firstErrorField) {
+            scheduleFieldFocus(firstErrorField);
+          }
         } else {
           setErrorMessage(serverError || "Не удалось сохранить работу.");
         }
@@ -532,11 +600,20 @@ export function SubmissionForm({
                 <Label htmlFor="submission-title" className="text-base">
                   Название работы
                 </Label>
-                <span className="text-xs text-muted-foreground">
+                <span
+                  id="submission-title-count"
+                  className={cn(
+                    "text-xs",
+                    title.trim().length > 120
+                      ? "font-medium text-destructive"
+                      : "text-muted-foreground"
+                  )}
+                >
                   {title.trim().length} / 120
                 </span>
               </div>
               <Input
+                ref={titleRef}
                 id="submission-title"
                 type="text"
                 value={title}
@@ -546,16 +623,26 @@ export function SubmissionForm({
                 }}
                 disabled={isBusy}
                 placeholder="Например: Помощник для планирования задач"
+                aria-required="true"
                 aria-invalid={Boolean(fieldErrors.title)}
-                aria-describedby={
-                  fieldErrors.title ? "submission-title-error" : undefined
-                }
+                aria-describedby={joinDescribedBy(
+                  "submission-title-hint",
+                  "submission-title-count",
+                  fieldErrors.title && "submission-title-error"
+                )}
                 className="min-h-11 text-base"
               />
+              <p
+                id="submission-title-hint"
+                className="text-sm text-muted-foreground"
+              >
+                От 5 до 120 символов.
+              </p>
               {fieldErrors.title ? (
                 <p
                   id="submission-title-error"
-                  className="text-sm text-destructive"
+                  role="alert"
+                  className="text-sm font-medium text-destructive"
                 >
                   {fieldErrors.title}
                 </p>
@@ -567,11 +654,20 @@ export function SubmissionForm({
                 <Label htmlFor="submission-description" className="text-base">
                   Описание
                 </Label>
-                <span className="text-xs text-muted-foreground">
+                <span
+                  id="submission-description-count"
+                  className={cn(
+                    "text-xs",
+                    description.trim().length > 2000
+                      ? "font-medium text-destructive"
+                      : "text-muted-foreground"
+                  )}
+                >
                   {description.trim().length} / 2000
                 </span>
               </div>
               <textarea
+                ref={descriptionRef}
                 id="submission-description"
                 rows={6}
                 value={description}
@@ -581,18 +677,26 @@ export function SubmissionForm({
                 }}
                 disabled={isBusy}
                 placeholder="Что делает ваш проект? Как его запустить? Что уже готово?"
+                aria-required="true"
                 aria-invalid={Boolean(fieldErrors.description)}
-                aria-describedby={
-                  fieldErrors.description
-                    ? "submission-description-error"
-                    : undefined
-                }
+                aria-describedby={joinDescribedBy(
+                  "submission-description-hint",
+                  "submission-description-count",
+                  fieldErrors.description && "submission-description-error"
+                )}
                 className="w-full rounded-lg border border-input bg-transparent px-3 py-2.5 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/40 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-muted disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20"
               />
+              <p
+                id="submission-description-hint"
+                className="text-sm text-muted-foreground"
+              >
+                От 20 до 2000 символов.
+              </p>
               {fieldErrors.description ? (
                 <p
                   id="submission-description-error"
-                  className="text-sm text-destructive"
+                  role="alert"
+                  className="text-sm font-medium text-destructive"
                 >
                   {fieldErrors.description}
                 </p>
@@ -604,6 +708,7 @@ export function SubmissionForm({
                 Ссылка на репозиторий
               </Label>
               <Input
+                ref={repoUrlRef}
                 id="submission-repo"
                 type="url"
                 value={repoUrl}
@@ -614,28 +719,27 @@ export function SubmissionForm({
                 disabled={isBusy}
                 placeholder="https://github.com/..."
                 aria-invalid={Boolean(fieldErrors.repoUrl)}
-                aria-describedby={
-                  fieldErrors.repoUrl
-                    ? "submission-repo-error"
-                    : "submission-repo-hint"
-                }
+                aria-describedby={joinDescribedBy(
+                  "submission-repo-hint",
+                  fieldErrors.repoUrl && "submission-repo-error"
+                )}
                 className="min-h-11 text-base"
               />
+              <p
+                id="submission-repo-hint"
+                className="text-sm text-muted-foreground"
+              >
+                Необязательно. GitHub, GitLab или другой репозиторий.
+              </p>
               {fieldErrors.repoUrl ? (
                 <p
                   id="submission-repo-error"
-                  className="text-sm text-destructive"
+                  role="alert"
+                  className="text-sm font-medium text-destructive"
                 >
                   {fieldErrors.repoUrl}
                 </p>
-              ) : (
-                <p
-                  id="submission-repo-hint"
-                  className="text-sm text-muted-foreground"
-                >
-                  Необязательно. GitHub, GitLab или другой репозиторий.
-                </p>
-              )}
+              ) : null}
             </div>
 
             <div className="space-y-2">
@@ -643,6 +747,7 @@ export function SubmissionForm({
                 Ссылка на демо
               </Label>
               <Input
+                ref={demoUrlRef}
                 id="submission-demo"
                 type="url"
                 value={demoUrl}
@@ -653,28 +758,27 @@ export function SubmissionForm({
                 disabled={isBusy}
                 placeholder="https://..."
                 aria-invalid={Boolean(fieldErrors.demoUrl)}
-                aria-describedby={
-                  fieldErrors.demoUrl
-                    ? "submission-demo-error"
-                    : "submission-demo-hint"
-                }
+                aria-describedby={joinDescribedBy(
+                  "submission-demo-hint",
+                  fieldErrors.demoUrl && "submission-demo-error"
+                )}
                 className="min-h-11 text-base"
               />
+              <p
+                id="submission-demo-hint"
+                className="text-sm text-muted-foreground"
+              >
+                Необязательно. Видео, презентация или рабочий сайт.
+              </p>
               {fieldErrors.demoUrl ? (
                 <p
                   id="submission-demo-error"
-                  className="text-sm text-destructive"
+                  role="alert"
+                  className="text-sm font-medium text-destructive"
                 >
                   {fieldErrors.demoUrl}
                 </p>
-              ) : (
-                <p
-                  id="submission-demo-hint"
-                  className="text-sm text-muted-foreground"
-                >
-                  Необязательно. Видео, презентация или рабочий сайт.
-                </p>
-              )}
+              ) : null}
             </div>
 
             {canEdit ? (
@@ -683,6 +787,7 @@ export function SubmissionForm({
                   type="submit"
                   size="lg"
                   disabled={isBusy}
+                  aria-busy={isSaving}
                   className="min-h-11 px-6 text-base"
                 >
                   {isSaving
@@ -700,6 +805,7 @@ export function SubmissionForm({
                     variant="destructive"
                     size="lg"
                     disabled={isBusy}
+                    aria-busy={isWithdrawing}
                     onClick={() => setIsWithdrawDialogOpen(true)}
                     className="min-h-11 px-5 text-base"
                   >

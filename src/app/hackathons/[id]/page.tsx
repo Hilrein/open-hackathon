@@ -223,13 +223,13 @@ async function HackathonDetailContent({
           </Badge>
         </div>
 
-        <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+        <h1 className="break-words text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
           {hackathon.title}
         </h1>
       </div>
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_340px]">
-        <div className="flex flex-col gap-8">
+        <div className="flex min-w-0 flex-col gap-8">
           <Card className="p-2">
             <CardHeader>
               <CardTitle className="text-xl">Основная информация</CardTitle>
@@ -298,31 +298,35 @@ async function HackathonDetailContent({
           )}
         </div>
 
-        <aside className="lg:sticky lg:top-8 lg:self-start">
+        <aside className="order-first lg:order-none lg:sticky lg:top-24 lg:self-start">
           <Card className="p-2">
             <CardHeader>
               <CardTitle className="text-xl">Участие</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
               <p className="text-base text-muted-foreground">
-                {isFinished
-                  ? "Этот хакатон уже завершился."
-                  : "Подайте заявку, чтобы принять участие в хакатоне."}
+                {isFinished && initialParticipating
+                  ? "Этот хакатон уже завершился. Ваше участие сохранено в истории."
+                  : isFinished
+                    ? "Этот хакатон уже завершился. Подача заявок закрыта."
+                    : isOrganizer
+                      ? "Вы организатор этого хакатона."
+                      : initialParticipating
+                        ? "Вы участвуете в этом хакатоне."
+                        : isFull
+                          ? "Все места на этом хакатоне уже заняты."
+                          : "Подайте заявку, чтобы принять участие в хакатоне."}
               </p>
-              <ParticipateButton
-                slug={hackathon.id}
-                hackathonTitle={hackathon.title}
-                isAuthenticated={isAuthenticated}
-                isOrganizer={isOrganizer}
-                isFinished={isFinished}
-                isFull={isFull}
-                initialParticipating={initialParticipating}
-                initialParticipantsCount={hackathon.participantsCount}
-              />
 
               {initialParticipating && !isOrganizer ? (
-                <div className="flex flex-col gap-2.5 border-t pt-4">
-                  {ownSubmission ? (
+                <div className="flex flex-col gap-2.5 border-b pb-4">
+                  {isFinished ? (
+                    <p className="text-sm font-medium text-foreground">
+                      {ownSubmission
+                        ? "Работа была сдана."
+                        : "Работа не была сдана."}
+                    </p>
+                  ) : ownSubmission ? (
                     <p className="text-sm font-medium text-foreground">
                       Работа сдана.
                     </p>
@@ -345,7 +349,7 @@ async function HackathonDetailContent({
                           !ownSubmission && hackathon.status === "active"
                             ? "default"
                             : "outline",
-                        size: "lg",
+                        size: "default",
                       }),
                       "min-h-11 w-full text-base"
                     )}
@@ -356,14 +360,37 @@ async function HackathonDetailContent({
                   <Link
                     href={`/my-participations/${hackathon.id}/team`}
                     className={cn(
-                      buttonVariants({ variant: "outline", size: "lg" }),
+                      buttonVariants({ variant: "outline", size: "default" }),
                       "min-h-11 w-full text-base"
                     )}
                   >
                     Команда
                   </Link>
+
+                  {isFinished ? (
+                    <Link
+                      href={`/hackathons/${hackathon.id}/results`}
+                      className={cn(
+                        buttonVariants({ variant: "outline", size: "default" }),
+                        "min-h-11 w-full text-base"
+                      )}
+                    >
+                      Результаты
+                    </Link>
+                  ) : null}
                 </div>
               ) : null}
+
+              <ParticipateButton
+                slug={hackathon.id}
+                hackathonTitle={hackathon.title}
+                isAuthenticated={isAuthenticated}
+                isOrganizer={isOrganizer}
+                isFinished={isFinished}
+                isFull={isFull}
+                initialParticipating={initialParticipating}
+                initialParticipantsCount={hackathon.participantsCount}
+              />
             </CardContent>
           </Card>
         </aside>

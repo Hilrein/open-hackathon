@@ -240,7 +240,9 @@ async function HackathonWorkContent({ params }: HackathonWorkContentProps) {
           <p className="text-sm font-medium text-foreground">
             {viewerIsCaptain
               ? `Команда «${teamName}». Вы капитан, вы сдаёте работу.`
-              : `Команда «${teamName}». Работу сдаёт капитан ${captainName ?? ""}.`}
+              : ownSubmission
+                ? `Команда «${teamName}».`
+                : `Команда «${teamName}». Работу сдаёт капитан ${captainName ?? ""}.`}
           </p>
         ) : null}
 
@@ -248,7 +250,9 @@ async function HackathonWorkContent({ params }: HackathonWorkContentProps) {
           <p className="text-sm font-medium text-muted-foreground">
             {ownSubmission
               ? `Работа сдана.${updatedLabel ? ` Обновлено ${updatedLabel}.` : ""}`
-              : "Работа пока не сдана."}
+              : hackathon.status === "finished"
+                ? "Работа не была сдана."
+                : "Работа пока не сдана."}
           </p>
         ) : null}
       </div>
@@ -257,10 +261,14 @@ async function HackathonWorkContent({ params }: HackathonWorkContentProps) {
         <Card>
           <CardContent className="space-y-2 p-6 text-center sm:p-8">
             <h2 className="text-xl font-semibold text-foreground">
-              Капитан ещё не сдал работу команды.
+              {hackathon.status === "finished"
+                ? "Работа команды не была сдана."
+                : "Капитан ещё не сдал работу команды."}
             </h2>
             <p className="mx-auto max-w-md text-base text-muted-foreground">
-              Когда капитан сдаст работу, вы увидите её здесь.
+              {hackathon.status === "finished"
+                ? "Хакатон завершён. Приём работ закрыт."
+                : "Когда капитан сдаст работу, вы увидите её здесь."}
             </p>
           </CardContent>
         </Card>

@@ -167,7 +167,7 @@ async function HackathonTeamContent({ params }: HackathonTeamContentProps) {
             })}
           >
             <FileCode2 className="size-4" aria-hidden="true" />
-            Ваша работа
+            {initialTeam ? "Работа команды" : "Ваша работа"}
           </Link>
           <Link
             href={hackathonUrl}
@@ -207,7 +207,7 @@ async function HackathonTeamContent({ params }: HackathonTeamContentProps) {
         </p>
       </div>
 
-      {hackathon.status === "finished" ? (
+      {hackathon.status === "finished" && initialTeam !== null ? (
         <Alert className="border-border bg-muted/50 text-foreground">
           <Lock className="size-4" aria-hidden="true" />
           <AlertDescription className="text-sm sm:text-base">

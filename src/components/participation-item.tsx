@@ -42,7 +42,11 @@ export function ParticipationItem({
   const isFull =
     hackathon.maxParticipants !== undefined &&
     hackathon.participantsCount >= hackathon.maxParticipants;
-  const workLinkLabel = "Работа";
+  const workLinkLabel = hasSubmission
+    ? "Работа сдана"
+    : hackathon.status === "active"
+      ? "Сдать работу"
+      : "Работа";
 
   return (
     <Card>
@@ -57,7 +61,7 @@ export function ParticipationItem({
             </Badge>
           </div>
 
-          <h2 className="text-lg font-semibold leading-snug text-foreground">
+          <h2 className="break-words text-lg font-semibold leading-snug text-foreground">
             <Link
               href={`/hackathons/${hackathon.id}`}
               className="rounded-sm hover:underline focus-visible:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
@@ -71,9 +75,9 @@ export function ParticipationItem({
               <Calendar className="size-4 shrink-0" aria-hidden="true" />
               {formatHackathonDateRange(hackathon.startDate, hackathon.endDate)}
             </span>
-            <span className="inline-flex items-center gap-1.5">
+            <span className="inline-flex min-w-0 items-center gap-1.5 break-words">
               <MapPin className="size-4 shrink-0" aria-hidden="true" />
-              {hackathon.location}
+              <span className="break-words">{hackathon.location}</span>
             </span>
             <span className="inline-flex items-center gap-1.5">
               <Users className="size-4 shrink-0" aria-hidden="true" />
@@ -97,7 +101,7 @@ export function ParticipationItem({
                 !hasSubmission && hackathon.status === "active"
                   ? "default"
                   : "outline",
-              size: "lg",
+              size: "default",
               className: "min-h-11 w-full text-base",
             })}
           >
@@ -108,7 +112,7 @@ export function ParticipationItem({
             href={`/my-participations/${hackathon.id}/team`}
             className={buttonVariants({
               variant: "outline",
-              size: "lg",
+              size: "default",
               className: "min-h-11 w-full text-base",
             })}
           >
@@ -125,6 +129,8 @@ export function ParticipationItem({
             initialParticipating={true}
             initialParticipantsCount={hackathon.participantsCount}
             showParticipantsCount={false}
+            showParticipatingStatus={isFinished}
+            redirectPath="/my-participations"
           />
         </div>
       </CardContent>

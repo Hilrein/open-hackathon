@@ -242,7 +242,11 @@ async function OrganizerTeamsContent({ params }: OrganizerTeamsContentProps) {
       ) : (
         <div className="space-y-4">
           {teams.map((team) => (
-            <OrganizerTeamItem key={team.id} team={team} />
+            <OrganizerTeamItem
+              key={team.id}
+              team={team}
+              isFinished={isFinished}
+            />
           ))}
         </div>
       )}

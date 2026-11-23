@@ -7,6 +7,7 @@ import type { TeamDTO } from "@/lib/hackathon-teams";
 
 interface OrganizerTeamItemProps {
   team: TeamDTO;
+  isFinished?: boolean;
 }
 
 function formatRussianDate(iso: string): string {
@@ -21,7 +22,10 @@ function formatRussianDate(iso: string): string {
   }).format(date);
 }
 
-export function OrganizerTeamItem({ team }: OrganizerTeamItemProps) {
+export function OrganizerTeamItem({
+  team,
+  isFinished = false,
+}: OrganizerTeamItemProps) {
   const createdLabel = formatRussianDate(team.createdAt);
 
   return (
@@ -55,25 +59,29 @@ export function OrganizerTeamItem({ team }: OrganizerTeamItemProps) {
       </CardHeader>
 
       <CardContent className="space-y-4">
-        <div className="flex flex-col gap-1.5 rounded-lg border bg-muted/30 p-3.5 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-2">
-            <KeyRound
-              className="size-4 shrink-0 text-muted-foreground"
-              aria-hidden="true"
-            />
-            <span className="text-sm text-muted-foreground">
-              Код приглашения:
-            </span>
-            <span className="select-all font-mono text-base font-semibold tracking-wider text-foreground">
-              {team.inviteCode}
-            </span>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Участники могут войти в команду по этому коду.
-          </p>
-        </div>
+        {!isFinished ? (
+          <>
+            <div className="flex flex-col gap-1.5 rounded-lg border bg-muted/30 p-3.5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-wrap items-center gap-2">
+                <KeyRound
+                  className="size-4 shrink-0 text-muted-foreground"
+                  aria-hidden="true"
+                />
+                <span className="text-sm text-muted-foreground">
+                  Код приглашения:
+                </span>
+                <span className="select-all break-all font-mono text-base font-semibold tracking-wider text-foreground">
+                  {team.inviteCode}
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Участники могут войти в команду по этому коду.
+              </p>
+            </div>
 
-        <Separator />
+            <Separator />
+          </>
+        ) : null}
 
         <div className="space-y-2.5">
           <h3 className="text-base font-semibold text-foreground">Состав</h3>

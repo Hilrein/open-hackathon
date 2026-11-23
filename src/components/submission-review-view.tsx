@@ -1,6 +1,6 @@
 import { Calendar, Clock, Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import type { SubmissionReviewDTO } from "@/lib/hackathon-reviews";
 import type { HackathonStatus } from "@/types/hackathon";
@@ -39,9 +39,9 @@ export function SubmissionReviewView({
       <Card>
         <CardHeader className="gap-3 pb-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <CardTitle className="text-xl font-bold text-foreground">
+            <h2 className="text-xl font-bold text-foreground">
               Оценка организатора
-            </CardTitle>
+            </h2>
             <Badge
               variant="secondary"
               className="gap-1.5 px-3 py-1 text-base font-semibold"

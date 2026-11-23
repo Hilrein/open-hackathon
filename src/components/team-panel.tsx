@@ -190,7 +190,7 @@ export function TeamPanel({
           setCreateNameError(data.fieldErrors.name[0]);
           setError("Проверьте поля формы.");
         } else {
-          setError(serverError || "Действие недоступно.");
+          setError(serverError || "Не удалось создать команду.");
           router.refresh();
         }
         return;
@@ -205,7 +205,7 @@ export function TeamPanel({
         return;
       }
 
-      setError("Не удалось выполнить действие. Попробуйте позже.");
+      setError("Не удалось создать команду. Попробуйте позже.");
     } catch {
       setError(
         "Не удалось соединиться с сервером. Проверьте интернет и попробуйте ещё раз."
@@ -290,7 +290,7 @@ export function TeamPanel({
           setJoinCodeError(data.fieldErrors.inviteCode[0]);
           setError("Проверьте поля формы.");
         } else {
-          setError(serverError || "Действие недоступно.");
+          setError(serverError || "Не удалось войти в команду.");
           router.refresh();
         }
         return;
@@ -298,14 +298,15 @@ export function TeamPanel({
 
       if (response.status === 409) {
         setError(
-          serverError || "Вы уже состоите в команде или название занято."
+          serverError ||
+            "Не удалось войти в команду. Возможно, вы уже состоите в команде."
         );
         setShowWorkLinkOnError(true);
         router.refresh();
         return;
       }
 
-      setError("Не удалось выполнить действие. Попробуйте позже.");
+      setError("Не удалось войти в команду. Попробуйте позже.");
     } catch {
       setError(
         "Не удалось соединиться с сервером. Проверьте интернет и попробуйте ещё раз."
@@ -375,12 +376,12 @@ export function TeamPanel({
       }
 
       if (response.status === 400) {
-        setError(serverError || "Действие недоступно.");
+        setError(serverError || "Не удалось покинуть команду.");
         router.refresh();
         return;
       }
 
-      setError("Не удалось выполнить действие. Попробуйте позже.");
+      setError("Не удалось покинуть команду. Попробуйте позже.");
     } catch {
       setIsLeaveDialogOpen(false);
       setError(
@@ -453,12 +454,12 @@ export function TeamPanel({
       }
 
       if (response.status === 400) {
-        setError(serverError || "Действие недоступно.");
+        setError(serverError || "Не удалось распустить команду.");
         router.refresh();
         return;
       }
 
-      setError("Не удалось выполнить действие. Попробуйте позже.");
+      setError("Не удалось распустить команду. Попробуйте позже.");
     } catch {
       setIsDisbandDialogOpen(false);
       setError(
@@ -680,44 +681,55 @@ export function TeamPanel({
           </CardHeader>
 
           <CardContent className="space-y-6">
-            <div className="space-y-2.5 rounded-xl border bg-muted/30 p-4">
-              <p className="text-sm font-medium text-muted-foreground">
-                Код приглашения
-              </p>
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <span className="select-all font-mono text-2xl font-bold tracking-widest text-foreground">
-                  {team.inviteCode}
-                </span>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => handleCopyCode(team.inviteCode)}
-                  className="min-h-11 px-4 text-base"
-                >
-                  {copyState === "copied" ? (
-                    <>
-                      <Check className="size-4" aria-hidden="true" />
-                      Скопировано
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="size-4" aria-hidden="true" />
-                      Скопировать код
-                    </>
-                  )}
-                </Button>
-              </div>
-              {copyState === "manual" ? (
-                <p className="text-sm text-muted-foreground">
-                  Скопируйте код вручную.
-                </p>
-              ) : null}
-              <p className="text-sm text-muted-foreground">
-                Поделитесь кодом с теми, кого хотите пригласить.
-              </p>
-            </div>
+            {!isFinished ? (
+              <>
+                <div className="space-y-2.5 rounded-xl border bg-muted/30 p-4">
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Код приглашения
+                  </p>
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <span className="select-all break-all font-mono text-2xl font-bold tracking-widest text-foreground">
+                      {team.inviteCode}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => handleCopyCode(team.inviteCode)}
+                      className="min-h-11 px-4 text-base"
+                    >
+                      {copyState === "copied" ? (
+                        <>
+                          <Check className="size-4" aria-hidden="true" />
+                          Скопировано
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="size-4" aria-hidden="true" />
+                          Скопировать код
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                  <span role="status" aria-live="polite" className="sr-only">
+                    {copyState === "copied"
+                      ? "Код приглашения скопирован."
+                      : copyState === "manual"
+                        ? "Скопируйте код вручную."
+                        : ""}
+                  </span>
+                  {copyState === "manual" ? (
+                    <p className="text-sm text-muted-foreground">
+                      Скопируйте код вручную.
+                    </p>
+                  ) : null}
+                  <p className="text-sm text-muted-foreground">
+                    Поделитесь кодом с теми, кого хотите пригласить.
+                  </p>
+                </div>
 
-            <Separator />
+                <Separator />
+              </>
+            ) : null}
 
             <div className="space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-2">

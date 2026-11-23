@@ -2,7 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, Info, Lock, Trash2 } from "lucide-react";
+import {
+  Calendar,
+  CheckCircle2,
+  ExternalLink,
+  Info,
+  Lock,
+  Trash2,
+} from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   AlertDialog,
@@ -14,14 +21,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 import type { SubmissionDTO } from "@/lib/hackathon-submissions";
 import { submissionSchema } from "@/lib/submission-schema";
 import type { HackathonStatus } from "@/types/hackathon";
-import { cn } from "cn";
 
 interface SubmissionFormProps {
   slug: string;
@@ -47,11 +54,31 @@ interface SubmissionApiResponse {
 
 const STATUS_HINT_MAP: Record<HackathonStatus, string> = {
   upcoming:
-    "Хакатон ещё не начался. Сдать работу можно будет после старта.",
+    "Хакатон ещё не начался. Работу можно будет сдать после старта.",
   active: "Сдайте работу до окончания хакатона.",
   finished:
     "Хакатон завершён. Работу можно посмотреть, но изменить или отозвать нельзя.",
 };
+
+function formatRussianDate(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+  return new Intl.DateTimeFormat("ru-RU", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(date);
+}
+
+function getHostname(url: string): string {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return "";
+  }
+}
 
 export function SubmissionForm({
   slug,
@@ -311,11 +338,20 @@ export function SubmissionForm({
       }
 
       if (response.status === 400) {
-        setErrorMessage(serverError || "Не удалось отозвать работу.");
+        setErrorMessage(
+          serverError ||
+            (isInTeam
+              ? "Не удалось отозвать работу команды."
+              : "Не удалось отозвать работу.")
+        );
         return;
       }
 
-      setErrorMessage("Не удалось сохранить работу. Попробуйте позже.");
+      setErrorMessage(
+        isInTeam
+          ? "Не удалось отозвать работу команды. Попробуйте позже."
+          : "Не удалось отозвать работу. Попробуйте позже."
+      );
     } catch {
       setIsWithdrawDialogOpen(false);
       setErrorMessage(
@@ -326,21 +362,145 @@ export function SubmissionForm({
     }
   }
 
+  if (isReadOnly) {
+    if (!submission) {
+      const emptyReadOnlyTitle =
+        isInTeam && !viewerIsCaptain
+          ? status === "finished"
+            ? "Работа команды не была сдана."
+            : "Капитан ещё не сдал работу команды."
+          : status === "upcoming"
+            ? "Хакатон ещё не начался. Работу можно будет сдать после старта."
+            : "Работа не была сдана.";
+
+      const emptyReadOnlyDescription =
+        isInTeam && !viewerIsCaptain
+          ? status === "finished"
+            ? `Хакатон завершён. Работу команды сдаёт капитан ${captainName ?? ""}.`
+            : `Работу команды сдаёт капитан ${captainName ?? ""}. Когда капитан сдаст работу, вы увидите её здесь.`
+          : status === "upcoming"
+            ? "Когда хакатон начнётся, на этой странице откроется форма сдачи работы."
+            : "Хакатон завершён. Приём работ закрыт.";
+
+      return (
+        <div className="mx-auto w-full max-w-2xl space-y-5">
+          <Card>
+            <CardContent className="space-y-2 p-6 text-center sm:p-8">
+              <div className="mx-auto mb-2 inline-flex size-10 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                <Lock className="size-5" aria-hidden="true" />
+              </div>
+              <h2 className="text-xl font-semibold text-foreground">
+                {emptyReadOnlyTitle}
+              </h2>
+              <p className="mx-auto max-w-md text-base text-muted-foreground">
+                {emptyReadOnlyDescription}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
+
+    const updatedLabel = formatRussianDate(
+      submission.updatedAt || submission.createdAt
+    );
+    const repoHost = submission.repoUrl ? getHostname(submission.repoUrl) : "";
+    const demoHost = submission.demoUrl ? getHostname(submission.demoUrl) : "";
+
+    return (
+      <div className="mx-auto w-full max-w-2xl space-y-5">
+        <Alert className="border-border bg-muted/50 text-foreground">
+          <Lock className="size-4" aria-hidden="true" />
+          <AlertDescription className="text-sm sm:text-base">
+            {alertMessage}
+          </AlertDescription>
+        </Alert>
+
+        <Card>
+          <CardHeader className="gap-2 pb-4">
+            <h2 className="break-words text-xl font-bold leading-snug text-foreground">
+              {submission.title}
+            </h2>
+            {updatedLabel ? (
+              <p className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+                <Calendar className="size-4 shrink-0" aria-hidden="true" />
+                Обновлено {updatedLabel}
+              </p>
+            ) : null}
+          </CardHeader>
+
+          <CardContent className="space-y-5">
+            <p className="whitespace-pre-line break-words text-base leading-relaxed text-foreground">
+              {submission.description}
+            </p>
+
+            <Separator />
+
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+              {submission.repoUrl ? (
+                <div className="flex min-w-0 flex-wrap items-center gap-2">
+                  <a
+                    href={submission.repoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={buttonVariants({
+                      variant: "outline",
+                      className: "min-h-11 px-4 text-base",
+                    })}
+                  >
+                    <ExternalLink className="size-4" aria-hidden="true" />
+                    Открыть репозиторий
+                  </a>
+                  {repoHost ? (
+                    <span className="min-w-0 break-all text-xs text-muted-foreground">
+                      {repoHost}
+                    </span>
+                  ) : null}
+                </div>
+              ) : (
+                <span className="text-sm text-muted-foreground">
+                  Репозиторий не указан
+                </span>
+              )}
+
+              {submission.demoUrl ? (
+                <div className="flex min-w-0 flex-wrap items-center gap-2">
+                  <a
+                    href={submission.demoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={buttonVariants({
+                      variant: "outline",
+                      className: "min-h-11 px-4 text-base",
+                    })}
+                  >
+                    <ExternalLink className="size-4" aria-hidden="true" />
+                    Открыть демо
+                  </a>
+                  {demoHost ? (
+                    <span className="min-w-0 break-all text-xs text-muted-foreground">
+                      {demoHost}
+                    </span>
+                  ) : null}
+                </div>
+              ) : (
+                <span className="text-sm text-muted-foreground">
+                  Демо не указано
+                </span>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto w-full max-w-2xl space-y-5">
-      <Alert
-        className={cn(
-          isReadOnly && "border-border bg-muted/50 text-foreground"
-        )}
-      >
-        {isReadOnly ? (
-          <Lock className="size-4" aria-hidden="true" />
-        ) : (
-          <Info className="size-4" aria-hidden="true" />
-        )}
+      <Alert>
+        <Info className="size-4" aria-hidden="true" />
         <AlertDescription className="text-sm sm:text-base">
           {alertMessage}
-          {isReadOnly ? " Поля открыты только для чтения." : ""}
         </AlertDescription>
       </Alert>
 
@@ -384,16 +544,13 @@ export function SubmissionForm({
                   setTitle(event.target.value);
                   clearFieldError("title");
                 }}
-                readOnly={isReadOnly}
+                disabled={isBusy}
                 placeholder="Например: Помощник для планирования задач"
                 aria-invalid={Boolean(fieldErrors.title)}
                 aria-describedby={
                   fieldErrors.title ? "submission-title-error" : undefined
                 }
-                className={cn(
-                  "min-h-11 text-base",
-                  isReadOnly && "cursor-default bg-muted/40 text-muted-foreground"
-                )}
+                className="min-h-11 text-base"
               />
               {fieldErrors.title ? (
                 <p
@@ -422,7 +579,7 @@ export function SubmissionForm({
                   setDescription(event.target.value);
                   clearFieldError("description");
                 }}
-                readOnly={isReadOnly}
+                disabled={isBusy}
                 placeholder="Что делает ваш проект? Как его запустить? Что уже готово?"
                 aria-invalid={Boolean(fieldErrors.description)}
                 aria-describedby={
@@ -430,10 +587,7 @@ export function SubmissionForm({
                     ? "submission-description-error"
                     : undefined
                 }
-                className={cn(
-                  "w-full rounded-md border border-input bg-transparent px-3 py-2.5 text-base shadow-xs outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20",
-                  isReadOnly && "cursor-default bg-muted/40 text-muted-foreground"
-                )}
+                className="w-full rounded-lg border border-input bg-transparent px-3 py-2.5 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/40 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-muted disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20"
               />
               {fieldErrors.description ? (
                 <p
@@ -457,7 +611,7 @@ export function SubmissionForm({
                   setRepoUrl(event.target.value);
                   clearFieldError("repoUrl");
                 }}
-                readOnly={isReadOnly}
+                disabled={isBusy}
                 placeholder="https://github.com/..."
                 aria-invalid={Boolean(fieldErrors.repoUrl)}
                 aria-describedby={
@@ -465,10 +619,7 @@ export function SubmissionForm({
                     ? "submission-repo-error"
                     : "submission-repo-hint"
                 }
-                className={cn(
-                  "min-h-11 text-base",
-                  isReadOnly && "cursor-default bg-muted/40 text-muted-foreground"
-                )}
+                className="min-h-11 text-base"
               />
               {fieldErrors.repoUrl ? (
                 <p
@@ -499,7 +650,7 @@ export function SubmissionForm({
                   setDemoUrl(event.target.value);
                   clearFieldError("demoUrl");
                 }}
-                readOnly={isReadOnly}
+                disabled={isBusy}
                 placeholder="https://..."
                 aria-invalid={Boolean(fieldErrors.demoUrl)}
                 aria-describedby={
@@ -507,10 +658,7 @@ export function SubmissionForm({
                     ? "submission-demo-error"
                     : "submission-demo-hint"
                 }
-                className={cn(
-                  "min-h-11 text-base",
-                  isReadOnly && "cursor-default bg-muted/40 text-muted-foreground"
-                )}
+                className="min-h-11 text-base"
               />
               {fieldErrors.demoUrl ? (
                 <p
@@ -594,7 +742,11 @@ export function SubmissionForm({
               disabled={isWithdrawing}
               onClick={handleWithdraw}
             >
-              {isWithdrawing ? "Отзываем..." : "Отозвать работу"}
+              {isWithdrawing
+                ? "Отзываем..."
+                : isInTeam
+                  ? "Отозвать работу команды"
+                  : "Отозвать работу"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

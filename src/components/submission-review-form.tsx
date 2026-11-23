@@ -261,7 +261,8 @@ export function SubmissionReviewForm({
 
       if (response.status === 403) {
         setErrorMessage(
-          serverError || "Вы можете оценивать работы только своих хакатонов."
+          serverError ||
+            "Вы можете снимать оценки только у работ своих хакатонов."
         );
         return;
       }
@@ -273,12 +274,12 @@ export function SubmissionReviewForm({
       }
 
       if (response.status === 400) {
-        setErrorMessage(serverError || "Не удалось сохранить оценку.");
+        setErrorMessage(serverError || "Не удалось снять оценку.");
         router.refresh();
         return;
       }
 
-      setErrorMessage("Не удалось сохранить оценку. Попробуйте позже.");
+      setErrorMessage("Не удалось снять оценку. Попробуйте позже.");
     } catch {
       setIsRemoveDialogOpen(false);
       setErrorMessage(

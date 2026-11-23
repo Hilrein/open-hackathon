@@ -29,6 +29,8 @@ interface ParticipateButtonProps {
   initialParticipating: boolean;
   initialParticipantsCount: number;
   showParticipantsCount?: boolean;
+  showParticipatingStatus?: boolean;
+  redirectPath?: string;
 }
 
 interface ParticipateApiResponse {
@@ -47,6 +49,8 @@ export function ParticipateButton({
   initialParticipating,
   initialParticipantsCount,
   showParticipantsCount = true,
+  showParticipatingStatus = true,
+  redirectPath,
 }: ParticipateButtonProps) {
   const router = useRouter();
   const [participating, setParticipating] = useState(initialParticipating);
@@ -58,7 +62,7 @@ export function ParticipateButton({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const redirectToSignInUrl = `/sign-in?redirect=${encodeURIComponent(
-    `/hackathons/${slug}`
+    redirectPath ?? `/hackathons/${slug}`
   )}`;
 
   async function handleMutation(method: "POST" | "DELETE") {
@@ -124,14 +128,21 @@ export function ParticipateButton({
 
       if (response.status === 409) {
         setErrorMessage(
-          serverError || "Не удалось изменить участие. Обновите страницу."
+          serverError ||
+            (method === "DELETE"
+              ? "Не удалось отменить участие в хакатоне. Обновите страницу."
+              : "Не удалось присоединиться к хакатону. Обновите страницу.")
         );
         setIsCancelDialogOpen(false);
         router.refresh();
         return;
       }
 
-      setErrorMessage("Не удалось изменить участие. Попробуйте позже.");
+      setErrorMessage(
+        method === "DELETE"
+          ? "Не удалось отменить участие в хакатоне. Попробуйте позже."
+          : "Не удалось присоединиться к хакатону. Попробуйте позже."
+      );
       setIsCancelDialogOpen(false);
     } catch {
       setErrorMessage(
@@ -145,45 +156,55 @@ export function ParticipateButton({
 
   return (
     <div className="flex flex-col gap-3">
-      {participating ? (
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/10 px-3.5 py-2.5 text-sm font-medium text-foreground">
-            <CheckCircle2
-              className="size-4 shrink-0 text-primary"
-              aria-hidden="true"
-            />
-            <span>Вы участвуете</span>
-          </div>
-          <Button
-            type="button"
-            variant="outline"
-            size="lg"
-            disabled={isLoading}
-            onClick={() => {
-              setErrorMessage(null);
-              setIsCancelDialogOpen(true);
-            }}
-            className="min-h-12 w-full text-base"
-          >
-            {isLoading ? "Отменяем..." : "Отменить участие"}
-          </Button>
+      {isFinished && participating ? (
+        <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/50 px-3.5 py-2.5 text-sm font-medium text-foreground">
+          <CheckCircle2
+            className="size-4 shrink-0 text-muted-foreground"
+            aria-hidden="true"
+          />
+          <span>Вы участвовали</span>
         </div>
       ) : isFinished ? (
         <Button
           type="button"
           disabled
           size="lg"
-          className="min-h-12 w-full text-base"
+          className="min-h-11 w-full text-base"
         >
           Хакатон завершён
         </Button>
+      ) : participating ? (
+        <div className="flex flex-col gap-3">
+          {showParticipatingStatus ? (
+            <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/10 px-3.5 py-2.5 text-sm font-medium text-foreground">
+              <CheckCircle2
+                className="size-4 shrink-0 text-primary"
+                aria-hidden="true"
+              />
+              <span>Вы участвуете</span>
+            </div>
+          ) : null}
+          <Button
+            type="button"
+            variant="outline"
+            size="default"
+            disabled={isLoading}
+            onClick={() => {
+              setErrorMessage(null);
+              setIsCancelDialogOpen(true);
+            }}
+            className="min-h-11 w-full text-base"
+          >
+            {isLoading ? "Отменяем..." : "Отменить участие"}
+          </Button>
+        </div>
       ) : isOrganizer ? (
         <div className="flex flex-col gap-2">
           <Button
             type="button"
             disabled
             size="lg"
-            className="min-h-12 w-full text-base"
+            className="min-h-11 w-full text-base"
           >
             Вы организатор
           </Button>
@@ -197,7 +218,7 @@ export function ParticipateButton({
             type="button"
             disabled
             size="lg"
-            className="min-h-12 w-full text-base"
+            className="min-h-11 w-full text-base"
           >
             Мест нет
           </Button>
@@ -210,7 +231,7 @@ export function ParticipateButton({
           href={redirectToSignInUrl}
           className={cn(
             buttonVariants({ size: "lg" }),
-            "min-h-12 w-full text-base"
+            "min-h-11 w-full text-base"
           )}
         >
           Войти, чтобы участвовать
@@ -221,7 +242,7 @@ export function ParticipateButton({
           size="lg"
           disabled={isLoading}
           onClick={() => handleMutation("POST")}
-          className="min-h-12 w-full text-base"
+          className="min-h-11 w-full text-base"
         >
           {isLoading ? "Присоединяем..." : "Участвовать"}
         </Button>
@@ -248,11 +269,13 @@ export function ParticipateButton({
           }
         }}
       >
-        <AlertDialogContent>
+        <AlertDialogContent className="data-[size=default]:sm:max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle>Отменить участие?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Вы перестанете быть участником хакатона «{hackathonTitle}».
+            <AlertDialogTitle>Отменить участие в хакатоне?</AlertDialogTitle>
+            <AlertDialogDescription className="break-words leading-relaxed">
+              Вы перестанете быть участником хакатона «{hackathonTitle}». Если
+              вы состоите в команде или сдали работу, доступ к участию в этом
+              хакатоне будет потерян.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -5,8 +5,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Calendar,
+  ExternalLink,
   FileCode2,
   MapPin,
+  MoreHorizontal,
   Pencil,
   Trash2,
   Users,
@@ -25,6 +27,14 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLinkItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   HACKATHON_FORMAT_CONFIG,
   HACKATHON_STATUS_CONFIG,
@@ -103,9 +113,9 @@ export function HackathonManageItem({ hackathon }: HackathonManageItemProps) {
 
   return (
     <>
-      <Card>
-        <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
-          <div className="min-w-0 space-y-2.5">
+      <Card className="py-0">
+        <CardContent className="flex flex-col p-0">
+          <div className="min-w-0 space-y-2.5 p-5">
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="outline" className={statusConfig.className}>
                 {statusConfig.label}
@@ -115,7 +125,7 @@ export function HackathonManageItem({ hackathon }: HackathonManageItemProps) {
               </Badge>
             </div>
 
-            <h2 className="text-lg font-semibold leading-snug text-foreground">
+            <h2 className="min-w-0 break-words text-lg font-semibold leading-snug text-foreground">
               <Link
                 href={`/hackathons/${hackathon.id}`}
                 className="rounded-sm hover:underline focus-visible:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
@@ -132,9 +142,9 @@ export function HackathonManageItem({ hackathon }: HackathonManageItemProps) {
                   hackathon.endDate
                 )}
               </span>
-              <span className="inline-flex items-center gap-1.5">
+              <span className="inline-flex min-w-0 items-center gap-1.5 break-words">
                 <MapPin className="size-4 shrink-0" aria-hidden="true" />
-                {hackathon.location}
+                <span className="break-words">{hackathon.location}</span>
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <Users className="size-4 shrink-0" aria-hidden="true" />
@@ -143,69 +153,85 @@ export function HackathonManageItem({ hackathon }: HackathonManageItemProps) {
             </div>
           </div>
 
-          <div className="flex shrink-0 flex-wrap items-center gap-2.5">
-            <Link
-              href={`/hackathons/${hackathon.id}`}
-              className={buttonVariants({
-                variant: "outline",
-                className: "min-h-11 px-4 text-base",
-              })}
-            >
-              Открыть
-            </Link>
-            <Link
-              href={`/my-hackathons/${hackathon.id}/participants`}
-              className={buttonVariants({
-                variant: "outline",
-                className: "min-h-11 px-4 text-base",
-              })}
-            >
-              <Users className="size-4" aria-hidden="true" />
-              Участники
-            </Link>
-            <Link
-              href={`/my-hackathons/${hackathon.id}/teams`}
-              className={buttonVariants({
-                variant: "outline",
-                className: "min-h-11 px-4 text-base",
-              })}
-            >
-              <UsersRound className="size-4" aria-hidden="true" />
-              Команды
-            </Link>
-            <Link
-              href={`/my-hackathons/${hackathon.id}/submissions`}
-              className={buttonVariants({
-                variant: "outline",
-                className: "min-h-11 px-4 text-base",
-              })}
-            >
-              <FileCode2 className="size-4" aria-hidden="true" />
-              Работы
-            </Link>
-            <Link
-              href={`/my-hackathons/${hackathon.id}/edit`}
-              className={buttonVariants({
-                variant: "outline",
-                className: "min-h-11 px-4 text-base",
-              })}
-            >
-              <Pencil className="size-4" aria-hidden="true" />
-              Редактировать
-            </Link>
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={() => {
-                setErrorMessage(null);
-                setIsDialogOpen(true);
-              }}
-              disabled={isDeleting}
-              className="min-h-11 px-4 text-base"
-            >
-              <Trash2 className="size-4" aria-hidden="true" />
-              Удалить
-            </Button>
+          <div className="flex flex-wrap items-center justify-between gap-2.5 border-t border-border bg-muted/20 px-5 py-3.5">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <Link
+                href={`/my-hackathons/${hackathon.id}/participants`}
+                className={buttonVariants({
+                  variant: "outline",
+                  className: "min-h-11 px-4 text-base",
+                })}
+              >
+                <Users className="size-4" aria-hidden="true" />
+                Участники
+              </Link>
+              <Link
+                href={`/my-hackathons/${hackathon.id}/teams`}
+                className={buttonVariants({
+                  variant: "outline",
+                  className: "min-h-11 px-4 text-base",
+                })}
+              >
+                <UsersRound className="size-4" aria-hidden="true" />
+                Команды
+              </Link>
+              <Link
+                href={`/my-hackathons/${hackathon.id}/submissions`}
+                className={buttonVariants({
+                  variant: "outline",
+                  className: "min-h-11 px-4 text-base",
+                })}
+              >
+                <FileCode2 className="size-4" aria-hidden="true" />
+                Работы
+              </Link>
+            </div>
+
+            <DropdownMenu modal={false}>
+              <DropdownMenuTrigger
+                render={
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={isDeleting}
+                    aria-label={`Ещё действия для хакатона «${hackathon.title}»`}
+                    className="min-h-11 gap-2 px-4 text-base"
+                  />
+                }
+              >
+                <MoreHorizontal className="size-4" aria-hidden="true" />
+                <span>Ещё</span>
+              </DropdownMenuTrigger>
+
+              <DropdownMenuContent align="end" sideOffset={8} className="w-56">
+                <DropdownMenuLinkItem
+                  render={<Link href={`/hackathons/${hackathon.id}`} />}
+                >
+                  <ExternalLink className="size-4 shrink-0" aria-hidden="true" />
+                  <span>Открыть на сайте</span>
+                </DropdownMenuLinkItem>
+                <DropdownMenuLinkItem
+                  render={<Link href={`/my-hackathons/${hackathon.id}/edit`} />}
+                >
+                  <Pencil className="size-4 shrink-0" aria-hidden="true" />
+                  <span>Редактировать</span>
+                </DropdownMenuLinkItem>
+
+                <DropdownMenuSeparator />
+
+                <DropdownMenuItem
+                  variant="destructive"
+                  disabled={isDeleting}
+                  onClick={() => {
+                    setErrorMessage(null);
+                    setIsDialogOpen(true);
+                  }}
+                >
+                  <Trash2 className="size-4 shrink-0" aria-hidden="true" />
+                  <span>Удалить</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </CardContent>
       </Card>
@@ -221,12 +247,16 @@ export function HackathonManageItem({ hackathon }: HackathonManageItemProps) {
           }
         }}
       >
-        <AlertDialogContent>
+        <AlertDialogContent className="data-[size=default]:sm:max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle>Удалить хакатон?</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogDescription className="break-words text-sm leading-relaxed text-muted-foreground">
               Хакатон «{hackathon.title}» будет удалён без возможности
-              восстановления.
+              восстановления. Вместе с ним удалятся все его участники
+              {hackathon.participantsCount > 0
+                ? ` (${formatParticipantsCount(hackathon.participantsCount)})`
+                : ""}
+              , команды, сданные работы и оценки. Это действие необратимо.
             </AlertDialogDescription>
           </AlertDialogHeader>
 
@@ -240,12 +270,15 @@ export function HackathonManageItem({ hackathon }: HackathonManageItemProps) {
           ) : null}
 
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Отмена</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting} className="min-h-11 px-4 text-base">
+              Отмена
+            </AlertDialogCancel>
             <AlertDialogAction
               type="button"
               variant="destructive"
               onClick={handleDelete}
               disabled={isDeleting}
+              className="min-h-11 px-4 text-base"
             >
               {isDeleting ? "Удаляем..." : "Да, удалить"}
             </AlertDialogAction>

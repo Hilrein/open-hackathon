@@ -163,7 +163,7 @@ async function HackathonsCatalogContent({ searchParams }: HackathonsPageProps) {
         action="/hackathons"
         className="grid grid-cols-1 gap-4 rounded-xl border bg-card p-4 shadow-xs sm:grid-cols-2 lg:grid-cols-12 lg:items-end"
       >
-        <div className="flex flex-col gap-2 sm:col-span-2 lg:col-span-4">
+        <div className="flex flex-col gap-2 sm:col-span-2 lg:col-span-4 xl:col-span-3">
           <Label htmlFor="catalog-q" className="text-sm font-medium">
             Поиск
           </Label>
@@ -177,7 +177,7 @@ async function HackathonsCatalogContent({ searchParams }: HackathonsPageProps) {
           />
         </div>
 
-        <div className="flex flex-col gap-2 lg:col-span-2">
+        <div className="flex flex-col gap-2 lg:col-span-4 xl:col-span-2">
           <Label htmlFor="catalog-status" className="text-sm font-medium">
             Статус
           </Label>
@@ -194,7 +194,7 @@ async function HackathonsCatalogContent({ searchParams }: HackathonsPageProps) {
           </select>
         </div>
 
-        <div className="flex flex-col gap-2 lg:col-span-2">
+        <div className="flex flex-col gap-2 lg:col-span-4 xl:col-span-2">
           <Label htmlFor="catalog-format" className="text-sm font-medium">
             Формат
           </Label>
@@ -211,7 +211,7 @@ async function HackathonsCatalogContent({ searchParams }: HackathonsPageProps) {
           </select>
         </div>
 
-        <div className="flex flex-col gap-2 lg:col-span-2">
+        <div className="flex flex-col gap-2 sm:col-span-2 lg:col-span-6 xl:col-span-2">
           <Label htmlFor="catalog-sort" className="text-sm font-medium">
             Сортировка
           </Label>
@@ -228,11 +228,11 @@ async function HackathonsCatalogContent({ searchParams }: HackathonsPageProps) {
           </select>
         </div>
 
-        <div className="flex flex-wrap gap-2 sm:col-span-2 lg:col-span-2 lg:justify-end">
+        <div className="flex flex-wrap gap-2 sm:col-span-2 lg:col-span-6 lg:justify-end xl:col-span-3">
           <Button
             type="submit"
-            size="lg"
-            className="min-h-11 flex-1 px-5 text-base lg:flex-initial"
+            size="default"
+            className="min-h-11 flex-1 px-5 text-base sm:flex-initial"
           >
             Показать
           </Button>
@@ -240,7 +240,7 @@ async function HackathonsCatalogContent({ searchParams }: HackathonsPageProps) {
             <Link
               href="/hackathons"
               className={cn(
-                buttonVariants({ variant: "outline", size: "lg" }),
+                buttonVariants({ variant: "outline", size: "default" }),
                 "min-h-11 px-4 text-base"
               )}
             >

@@ -12,7 +12,7 @@ import { getSession } from "@/lib/session";
 import type { Hackathon } from "@/types/hackathon";
 
 export const metadata: Metadata = {
-  title: "Мои хакатоны — Open Hackathon",
+  title: "Мои хакатоны — Платформа хакатонов",
   description: "Управляйте хакатонами, которые вы создали.",
 };
 
@@ -88,6 +88,7 @@ async function MyHackathonsContent() {
             <Link
               href="/create"
               className={buttonVariants({
+                variant: "outline",
                 className: "min-h-11 px-5 text-base",
               })}
             >

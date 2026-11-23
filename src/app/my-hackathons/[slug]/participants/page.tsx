@@ -1,13 +1,14 @@
-import { Fragment, Suspense } from "react";
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
-import { ArrowLeft, ExternalLink, Mail, Users } from "lucide-react";
+import { Mail, Users } from "lucide-react";
+import { CopyHackathonLinkButton } from "@/components/copy-hackathon-link-button";
+import { OrganizerHackathonNav } from "@/components/organizer-hackathon-nav";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { getHackathonParticipantsForOrganizer } from "@/db/queries";
 import { formatParticipantsCount } from "@/lib/hackathon-formatters";
 import { getSession } from "@/lib/session";
@@ -152,47 +153,19 @@ async function HackathonParticipantsContent({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <Link
-          href="/my-hackathons"
-          className={buttonVariants({
-            variant: "ghost",
-            className: "min-h-11 px-3 text-base",
-          })}
-        >
-          <ArrowLeft className="size-4" aria-hidden="true" />
-          Назад в мои хакатоны
-        </Link>
-        <Link
-          href={hackathonUrl}
-          className={buttonVariants({
-            variant: "outline",
-            className: "min-h-11 px-4 text-base",
-          })}
-        >
-          <ExternalLink className="size-4" aria-hidden="true" />
-          Открыть хакатон
-        </Link>
-      </div>
+      <OrganizerHackathonNav
+        hackathon={hackathon}
+        activeSection="participants"
+      />
 
-      <div className="space-y-2">
-        <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-            Участники хакатона
-          </h1>
-          <Badge variant="secondary" className="gap-1.5 px-3 py-1 text-sm">
-            <Users className="size-3.5" aria-hidden="true" />
-            {formatParticipantsCount(participants.length)}
-          </Badge>
-        </div>
-        <p className="text-base text-muted-foreground">
-          <Link
-            href={hackathonUrl}
-            className="rounded-sm font-medium text-foreground hover:underline focus-visible:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-          >
-            {hackathon.title}
-          </Link>
-        </p>
+      <div className="flex flex-wrap items-center gap-3">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+          Участники хакатона
+        </h1>
+        <Badge variant="secondary" className="gap-1.5 px-3 py-1 text-sm">
+          <Users className="size-3.5" aria-hidden="true" />
+          {formatParticipantsCount(participants.length)}
+        </Badge>
       </div>
 
       {participants.length === 0 ? (
@@ -205,7 +178,8 @@ async function HackathonParticipantsContent({
               Поделитесь ссылкой на хакатон, чтобы участники могли
               присоединиться.
             </p>
-            <div>
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <CopyHackathonLinkButton slug={hackathon.id} />
               <Link
                 href={hackathonUrl}
                 className={buttonVariants({
@@ -218,39 +192,45 @@ async function HackathonParticipantsContent({
           </CardContent>
         </Card>
       ) : (
-        <Card>
+        <Card className="py-0">
           <CardContent className="p-0">
             <ul className="divide-y divide-border">
-              {participants.map((participant, index) => {
+              {participants.map((participant) => {
                 const joinedLabel = formatJoinedDate(participant.joinedAt);
                 const showEmail = participant.name !== participant.email;
 
                 return (
-                  <Fragment key={participant.userId}>
-                    {index > 0 ? <Separator className="sr-only" /> : null}
-                    <li className="flex flex-col gap-2 p-5 sm:flex-row sm:items-center sm:justify-between">
-                      <div className="min-w-0 space-y-1">
-                        <p className="truncate text-base font-semibold text-foreground">
-                          {participant.name}
-                        </p>
-                        {showEmail ? (
-                          <p className="inline-flex items-center gap-1.5 truncate text-sm text-muted-foreground">
-                            <Mail
-                              className="size-3.5 shrink-0"
-                              aria-hidden="true"
-                            />
-                            <span className="truncate">{participant.email}</span>
-                          </p>
-                        ) : null}
-                      </div>
-
-                      {joinedLabel ? (
-                        <p className="shrink-0 text-sm text-muted-foreground">
-                          Присоединился {joinedLabel}
-                        </p>
+                  <li
+                    key={participant.userId}
+                    className="flex flex-col gap-2 p-5 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div className="min-w-0 flex-1 space-y-1">
+                      <p className="truncate text-base font-semibold text-foreground">
+                        {participant.name}
+                      </p>
+                      {showEmail ? (
+                        <a
+                          href={`mailto:${participant.email}`}
+                          title={participant.email}
+                          className="inline-flex min-h-11 max-w-full min-w-0 items-center gap-1.5 rounded-sm text-sm text-muted-foreground hover:text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                        >
+                          <Mail
+                            className="size-3.5 shrink-0"
+                            aria-hidden="true"
+                          />
+                          <span className="min-w-0 truncate">
+                            {participant.email}
+                          </span>
+                        </a>
                       ) : null}
-                    </li>
-                  </Fragment>
+                    </div>
+
+                    {joinedLabel ? (
+                      <p className="shrink-0 text-sm text-muted-foreground">
+                        Присоединился {joinedLabel}
+                      </p>
+                    ) : null}
+                  </li>
                 );
               })}
             </ul>

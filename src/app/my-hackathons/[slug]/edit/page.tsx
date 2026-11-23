@@ -4,6 +4,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { CreateHackathonWizard } from "@/components/create-hackathon-wizard";
+import { OrganizerHackathonNav } from "@/components/organizer-hackathon-nav";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { getHackathonWithOwnerBySlug } from "@/db/queries";
@@ -16,7 +17,7 @@ export const metadata: Metadata = {
 
 function EditHackathonSkeleton() {
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-4">
+    <div className="mx-auto w-full max-w-4xl space-y-4">
       <div className="h-10 w-64 animate-pulse rounded-lg bg-muted/50" />
       <div className="h-96 animate-pulse rounded-xl border border-border bg-muted/40" />
     </div>
@@ -132,12 +133,17 @@ async function EditHackathonContent({ params }: EditHackathonContentProps) {
     session.user.name?.trim() || session.user.email || "";
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
+      <OrganizerHackathonNav
+        hackathon={record.hackathon}
+        activeSection="edit"
+      />
+
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-2">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
           Редактирование хакатона
         </h1>
-        <p className="text-lg text-muted-foreground">
+        <p className="text-base text-muted-foreground sm:text-lg">
           Измените данные и сохраните. Ссылка на хакатон останется прежней.
         </p>
       </div>

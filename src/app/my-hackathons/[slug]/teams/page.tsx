@@ -3,26 +3,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
-import {
-  ArrowLeft,
-  Calendar,
-  ExternalLink,
-  FileCode2,
-  Lock,
-  Users,
-  UsersRound,
-} from "lucide-react";
+import { Lock, UsersRound } from "lucide-react";
+import { OrganizerHackathonNav } from "@/components/organizer-hackathon-nav";
 import { OrganizerTeamItem } from "@/components/organizer-team-item";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { getHackathonWithOwnerBySlug } from "@/db/queries";
-import {
-  HACKATHON_STATUS_CONFIG,
-  formatHackathonDateRange,
-  formatParticipantsCount,
-} from "@/lib/hackathon-formatters";
+import { formatParticipantsCount } from "@/lib/hackathon-formatters";
 import {
   TeamForbiddenError,
   TeamNotFoundError,
@@ -180,7 +169,6 @@ async function OrganizerTeamsContent({ params }: OrganizerTeamsContentProps) {
     );
   }
 
-  const statusConfig = HACKATHON_STATUS_CONFIG[hackathon.status];
   const hackathonUrl = `/hackathons/${hackathon.id}`;
   const isFinished = hackathon.status === "finished";
   const membersInTeamsCount = teams.reduce(
@@ -192,75 +180,12 @@ async function OrganizerTeamsContent({ params }: OrganizerTeamsContentProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <Link
-          href="/my-hackathons"
-          className={buttonVariants({
-            variant: "ghost",
-            className: "min-h-11 px-3 text-base",
-          })}
-        >
-          <ArrowLeft className="size-4" aria-hidden="true" />
-          Назад в мои хакатоны
-        </Link>
-
-        <div className="flex flex-wrap items-center gap-2.5">
-          <Link
-            href={`/my-hackathons/${hackathon.id}/participants`}
-            className={buttonVariants({
-              variant: "outline",
-              className: "min-h-11 px-4 text-base",
-            })}
-          >
-            <Users className="size-4" aria-hidden="true" />
-            Участники
-          </Link>
-          <Link
-            href={`/my-hackathons/${hackathon.id}/submissions`}
-            className={buttonVariants({
-              variant: "outline",
-              className: "min-h-11 px-4 text-base",
-            })}
-          >
-            <FileCode2 className="size-4" aria-hidden="true" />
-            Работы
-          </Link>
-          <Link
-            href={hackathonUrl}
-            className={buttonVariants({
-              variant: "outline",
-              className: "min-h-11 px-4 text-base",
-            })}
-          >
-            <ExternalLink className="size-4" aria-hidden="true" />
-            Открыть хакатон
-          </Link>
-        </div>
-      </div>
+      <OrganizerHackathonNav hackathon={hackathon} activeSection="teams" />
 
       <div className="space-y-3">
-        <div className="flex flex-wrap items-center gap-3">
-          <Badge variant="outline" className={statusConfig.className}>
-            {statusConfig.detailLabel}
-          </Badge>
-          <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
-            <Calendar className="size-4 shrink-0" aria-hidden="true" />
-            {formatHackathonDateRange(hackathon.startDate, hackathon.endDate)}
-          </span>
-        </div>
-
         <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
           Команды хакатона
         </h1>
-
-        <p className="text-base text-muted-foreground">
-          <Link
-            href={hackathonUrl}
-            className="rounded-sm font-medium text-foreground hover:underline focus-visible:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-          >
-            {hackathon.title}
-          </Link>
-        </p>
 
         <div className="flex flex-wrap items-center gap-2.5">
           <Badge variant="secondary" className="gap-1.5 px-3 py-1 text-sm">

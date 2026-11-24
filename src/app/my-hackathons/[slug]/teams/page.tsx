@@ -6,6 +6,7 @@ import { connection } from "next/server";
 import { Lock, UsersRound } from "lucide-react";
 import { OrganizerHackathonNav } from "@/components/organizer-hackathon-nav";
 import { OrganizerTeamItem } from "@/components/organizer-team-item";
+import { RetryButton } from "@/components/retry-button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -145,7 +146,7 @@ async function OrganizerTeamsContent({ params }: OrganizerTeamsContentProps) {
 
   if (state === "error" || !hackathon) {
     return (
-      <Card className="mx-auto w-full max-w-xl">
+      <Card role="alert" className="mx-auto w-full max-w-xl">
         <CardContent className="space-y-4 p-6 text-center sm:p-8">
           <h1 className="text-xl font-semibold text-foreground">
             Не удалось загрузить команды
@@ -154,15 +155,7 @@ async function OrganizerTeamsContent({ params }: OrganizerTeamsContentProps) {
             Попробуйте обновить страницу позже.
           </p>
           <div>
-            <Link
-              href={`/my-hackathons/${encodeURIComponent(slug)}/teams`}
-              className={buttonVariants({
-                variant: "outline",
-                className: "min-h-11 px-5 text-base",
-              })}
-            >
-              Обновить страницу
-            </Link>
+            <RetryButton variant="outline" />
           </div>
         </CardContent>
       </Card>

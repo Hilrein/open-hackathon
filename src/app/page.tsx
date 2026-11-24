@@ -2,14 +2,12 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { connection } from "next/server";
+import { AlertCircle } from "lucide-react";
 import { HackathonCard } from "@/components/hackathon-card";
+import { RetryButton } from "@/components/retry-button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { buttonVariants } from "@/components/ui/button";
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardDescription, CardHeader } from "@/components/ui/card";
 import { getAllHackathons } from "@/db/queries";
 import { selectFeaturedHackathons } from "@/lib/hackathon-home";
 import { cn } from "cn";
@@ -40,24 +38,61 @@ const HOW_IT_WORKS_STEPS = [
 
 function FeaturedErrorState() {
   return (
-    <div className="flex flex-col items-start gap-4 rounded-xl border bg-card p-6 shadow-xs">
-      <div className="flex flex-col gap-1">
-        <h3 className="text-xl font-semibold text-foreground">
-          Не удалось загрузить хакатоны
-        </h3>
-        <p className="text-base text-muted-foreground">
-          Попробуйте обновить страницу позже.
-        </p>
+    <Alert variant="destructive" role="alert" className="p-6">
+      <AlertCircle className="size-5 shrink-0" aria-hidden="true" />
+      <AlertDescription className="flex flex-col items-start gap-4 text-base">
+        <div className="flex flex-col gap-1">
+          <h3 className="text-xl font-semibold text-foreground">
+            Не удалось загрузить хакатоны
+          </h3>
+          <p className="text-base text-muted-foreground">
+            Попробуйте обновить страницу позже.
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <RetryButton variant="default" size="lg" />
+          <Link
+            href="/hackathons"
+            className={cn(
+              buttonVariants({ variant: "outline", size: "lg" }),
+              "min-h-11 px-5 text-base"
+            )}
+          >
+            Открыть каталог
+          </Link>
+        </div>
+      </AlertDescription>
+    </Alert>
+  );
+}
+
+function FeaturedHackathonsSkeleton() {
+  return (
+    <div role="status" aria-busy="true" className="flex flex-col gap-6">
+      <span className="sr-only">Загружаем ближайшие хакатоны...</span>
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {[0, 1, 2].map((item) => (
+          <div
+            key={item}
+            className="flex h-96 flex-col overflow-hidden rounded-xl border border-border bg-card"
+          >
+            <div className="h-32 animate-pulse bg-muted/50 motion-reduce:animate-none" />
+            <div className="flex flex-1 flex-col gap-3 p-6">
+              <div className="flex gap-2">
+                <div className="h-6 w-20 animate-pulse rounded-full bg-muted/50 motion-reduce:animate-none" />
+                <div className="h-6 w-20 animate-pulse rounded-full bg-muted/40 motion-reduce:animate-none" />
+              </div>
+              <div className="h-7 w-3/4 animate-pulse rounded bg-muted/50 motion-reduce:animate-none" />
+              <div className="h-10 w-full animate-pulse rounded bg-muted/40 motion-reduce:animate-none" />
+              <div className="mt-auto space-y-2">
+                <div className="h-4 w-2/3 animate-pulse rounded bg-muted/40 motion-reduce:animate-none" />
+                <div className="h-4 w-1/2 animate-pulse rounded bg-muted/40 motion-reduce:animate-none" />
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
-      <Link
-        href="/hackathons"
-        className={cn(
-          buttonVariants({ variant: "outline", size: "lg" }),
-          "min-h-11 px-5 text-base"
-        )}
-      >
-        Открыть каталог
-      </Link>
+      <div className="h-11 w-56 animate-pulse rounded-lg border border-border bg-muted/40 motion-reduce:animate-none" />
     </div>
   );
 }
@@ -172,13 +207,7 @@ export default function HomePage() {
           </p>
         </div>
 
-        <Suspense
-          fallback={
-            <p className="text-base text-muted-foreground">
-              Загружаем хакатоны...
-            </p>
-          }
-        >
+        <Suspense fallback={<FeaturedHackathonsSkeleton />}>
           <FeaturedHackathonsContent />
         </Suspense>
       </section>
@@ -196,10 +225,15 @@ export default function HomePage() {
             <li key={step.number}>
               <Card className="h-full p-2">
                 <CardHeader className="gap-3">
-                  <span className="inline-flex size-10 items-center justify-center rounded-full bg-primary text-lg font-bold text-primary-foreground">
+                  <span
+                    aria-hidden="true"
+                    className="inline-flex size-10 items-center justify-center rounded-full bg-primary text-lg font-bold text-primary-foreground"
+                  >
                     {step.number}
                   </span>
-                  <CardTitle className="text-xl">{step.title}</CardTitle>
+                  <h3 className="text-xl font-semibold leading-snug text-foreground">
+                    {step.title}
+                  </h3>
                   <CardDescription className="text-base leading-relaxed">
                     {step.description}
                   </CardDescription>

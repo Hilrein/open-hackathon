@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { CheckCircle2, FileCode2, Users } from "lucide-react";
 import { OrganizerHackathonNav } from "@/components/organizer-hackathon-nav";
+import { RetryButton } from "@/components/retry-button";
 import { SubmissionItem } from "@/components/submission-item";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -148,7 +149,7 @@ async function HackathonSubmissionsContent({
 
   if (state === "error" || !hackathon) {
     return (
-      <Card className="mx-auto w-full max-w-xl">
+      <Card role="alert" className="mx-auto w-full max-w-xl">
         <CardContent className="space-y-4 p-6 text-center sm:p-8">
           <h1 className="text-xl font-semibold text-foreground">
             Не удалось загрузить работы
@@ -157,15 +158,7 @@ async function HackathonSubmissionsContent({
             Попробуйте обновить страницу позже.
           </p>
           <div>
-            <Link
-              href={`/my-hackathons/${encodeURIComponent(slug)}/submissions`}
-              className={buttonVariants({
-                variant: "outline",
-                className: "min-h-11 px-5 text-base",
-              })}
-            >
-              Обновить страницу
-            </Link>
+            <RetryButton variant="outline" />
           </div>
         </CardContent>
       </Card>

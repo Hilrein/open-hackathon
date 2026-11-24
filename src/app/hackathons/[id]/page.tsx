@@ -2,11 +2,20 @@ import { Suspense, cache } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { connection } from "next/server";
-import { Building2, Calendar, MapPin, Trophy, Users } from "lucide-react";
+import {
+  ArrowLeft,
+  Building2,
+  Calendar,
+  MapPin,
+  SearchX,
+  Trophy,
+  Users,
+} from "lucide-react";
 import { ParticipateButton } from "@/components/participate-button";
+import { RetryButton } from "@/components/retry-button";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   getHackathonBySlug,
   getHackathonParticipationContext,
@@ -64,8 +73,11 @@ export async function generateMetadata({
 function HackathonNotFound() {
   return (
     <div className="flex flex-col items-center justify-center gap-4 rounded-xl border bg-card px-6 py-16 text-center shadow-xs">
-      <div aria-hidden="true" className="text-4xl">
-        ❌
+      <div
+        aria-hidden="true"
+        className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground"
+      >
+        <SearchX className="size-6" aria-hidden="true" />
       </div>
       <div className="flex max-w-md flex-col gap-2">
         <h1 className="text-2xl font-bold text-foreground sm:text-3xl">
@@ -90,24 +102,66 @@ function HackathonNotFound() {
 
 function HackathonLoadError() {
   return (
-    <div className="flex flex-col items-center justify-center gap-4 rounded-xl border bg-card px-6 py-16 text-center shadow-xs">
+    <div
+      role="alert"
+      className="flex flex-col items-center justify-center gap-4 rounded-xl border bg-card px-6 py-16 text-center shadow-xs"
+    >
       <div className="flex max-w-md flex-col gap-2">
         <h1 className="text-2xl font-bold text-foreground sm:text-3xl">
           Не удалось загрузить хакатон
         </h1>
         <p className="text-base text-muted-foreground">
-          Не удалось загрузить хакатон. Попробуйте обновить страницу позже.
+          Попробуйте обновить страницу позже.
         </p>
       </div>
-      <Link
-        href="/hackathons"
-        className={cn(
-          buttonVariants({ variant: "default", size: "lg" }),
-          "mt-2 min-h-11 px-6 text-base"
-        )}
-      >
-        Вернуться к хакатонам
-      </Link>
+      <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
+        <RetryButton variant="default" size="lg" className="px-6" />
+        <Link
+          href="/hackathons"
+          className={cn(
+            buttonVariants({ variant: "outline", size: "lg" }),
+            "min-h-11 px-6 text-base"
+          )}
+        >
+          Вернуться к хакатонам
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function HackathonDetailSkeleton() {
+  return (
+    <div role="status" aria-busy="true" className="flex flex-col gap-6">
+      <span className="sr-only">Загружаем страницу хакатона...</span>
+
+      <div className="flex items-center justify-between gap-3">
+        <div className="h-11 w-44 animate-pulse rounded-lg bg-muted/40 motion-reduce:animate-none" />
+      </div>
+
+      <div className="flex flex-col gap-4">
+        <div className="flex gap-2">
+          <div className="h-7 w-24 animate-pulse rounded-full bg-muted/50 motion-reduce:animate-none" />
+          <div className="h-7 w-24 animate-pulse rounded-full bg-muted/40 motion-reduce:animate-none" />
+        </div>
+        <div className="h-10 w-full max-w-2xl animate-pulse rounded-lg bg-muted/50 motion-reduce:animate-none" />
+      </div>
+
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_340px]">
+        <div className="flex min-w-0 flex-col gap-8">
+          <div className="h-64 animate-pulse rounded-xl border border-border bg-muted/40 motion-reduce:animate-none" />
+          <div className="flex flex-col gap-3">
+            <div className="h-8 w-40 animate-pulse rounded-lg bg-muted/50 motion-reduce:animate-none" />
+            <div className="h-5 w-full animate-pulse rounded bg-muted/40 motion-reduce:animate-none" />
+            <div className="h-5 w-5/6 animate-pulse rounded bg-muted/40 motion-reduce:animate-none" />
+            <div className="h-5 w-4/6 animate-pulse rounded bg-muted/40 motion-reduce:animate-none" />
+          </div>
+        </div>
+
+        <aside className="order-first lg:order-none">
+          <div className="h-56 animate-pulse rounded-xl border border-border bg-muted/40 motion-reduce:animate-none" />
+        </aside>
+      </div>
     </div>
   );
 }
@@ -185,7 +239,8 @@ async function HackathonDetailContent({
             "min-h-11 px-3 text-base"
           )}
         >
-          ← Назад к хакатонам
+          <ArrowLeft className="size-4" aria-hidden="true" />
+          Назад к хакатонам
         </Link>
 
         {hackathon.status === "finished" ? (
@@ -232,11 +287,16 @@ async function HackathonDetailContent({
         <div className="flex min-w-0 flex-col gap-8">
           <Card className="p-2">
             <CardHeader>
-              <CardTitle className="text-xl">Основная информация</CardTitle>
+              <h2 className="text-xl font-semibold leading-snug text-foreground">
+                Основная информация
+              </h2>
             </CardHeader>
             <CardContent className="flex flex-col gap-4 text-base">
               <div className="flex items-center gap-3">
-                <Calendar className="size-5 shrink-0 text-muted-foreground" />
+                <Calendar
+                  className="size-5 shrink-0 text-muted-foreground"
+                  aria-hidden="true"
+                />
                 <span>
                   {formatHackathonDateRange(
                     hackathon.startDate,
@@ -246,24 +306,37 @@ async function HackathonDetailContent({
               </div>
 
               <div className="flex items-center gap-3">
-                <MapPin className="size-5 shrink-0 text-muted-foreground" />
-                <span>{hackathon.location}</span>
+                <MapPin
+                  className="size-5 shrink-0 text-muted-foreground"
+                  aria-hidden="true"
+                />
+                <span className="min-w-0 break-words">{hackathon.location}</span>
               </div>
 
               <div className="flex items-center gap-3">
-                <Building2 className="size-5 shrink-0 text-muted-foreground" />
-                <span>Организатор: {hackathon.organizerName}</span>
+                <Building2
+                  className="size-5 shrink-0 text-muted-foreground"
+                  aria-hidden="true"
+                />
+                <span className="min-w-0 break-words">
+                  Организатор: {hackathon.organizerName}
+                </span>
               </div>
 
               <div className="flex items-center gap-3">
-                <Users className="size-5 shrink-0 text-muted-foreground" />
+                <Users
+                  className="size-5 shrink-0 text-muted-foreground"
+                  aria-hidden="true"
+                />
                 <span>{participantsText}</span>
               </div>
 
               {hackathon.prizePool && (
                 <div className="mt-2 flex items-center gap-3 rounded-xl bg-accent/70 px-4 py-3 text-lg font-semibold text-accent-foreground">
-                  <Trophy className="size-5 shrink-0" />
-                  <span>Призовой фонд: {hackathon.prizePool}</span>
+                  <Trophy className="size-5 shrink-0" aria-hidden="true" />
+                  <span className="min-w-0 break-words">
+                    Призовой фонд: {hackathon.prizePool}
+                  </span>
                 </div>
               )}
             </CardContent>
@@ -301,7 +374,9 @@ async function HackathonDetailContent({
         <aside className="order-first lg:order-none lg:sticky lg:top-24 lg:self-start">
           <Card className="p-2">
             <CardHeader>
-              <CardTitle className="text-xl">Участие</CardTitle>
+              <h2 className="text-xl font-semibold leading-snug text-foreground">
+                Участие
+              </h2>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
               <p className="text-base text-muted-foreground">
@@ -317,6 +392,18 @@ async function HackathonDetailContent({
                           ? "Все места на этом хакатоне уже заняты."
                           : "Подайте заявку, чтобы принять участие в хакатоне."}
               </p>
+
+              {isOrganizer ? (
+                <Link
+                  href={`/my-hackathons/${hackathon.id}/participants`}
+                  className={cn(
+                    buttonVariants({ variant: "default", size: "default" }),
+                    "min-h-11 w-full text-base"
+                  )}
+                >
+                  Управлять хакатоном
+                </Link>
+              ) : null}
 
               {initialParticipating && !isOrganizer ? (
                 <div className="flex flex-col gap-2.5 border-b pb-4">
@@ -390,6 +477,7 @@ async function HackathonDetailContent({
                 isFull={isFull}
                 initialParticipating={initialParticipating}
                 initialParticipantsCount={hackathon.participantsCount}
+                showParticipantsCount={false}
               />
             </CardContent>
           </Card>
@@ -403,11 +491,7 @@ export default function HackathonDetailPage({
   params,
 }: HackathonDetailPageProps) {
   return (
-    <Suspense
-      fallback={
-        <div className="py-12 text-base text-muted-foreground">Загрузка...</div>
-      }
-    >
+    <Suspense fallback={<HackathonDetailSkeleton />}>
       <HackathonDetailContent params={params} />
     </Suspense>
   );

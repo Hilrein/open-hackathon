@@ -2,7 +2,9 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { connection } from "next/server";
+import { ChevronDown, Search } from "lucide-react";
 import { HackathonCard } from "@/components/hackathon-card";
+import { RetryButton } from "@/components/retry-button";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -46,7 +48,10 @@ function formatFoundCount(count: number): string {
 
 function DatabaseErrorState() {
   return (
-    <div className="flex flex-col items-center justify-center gap-4 rounded-xl border bg-card px-6 py-14 text-center shadow-xs">
+    <div
+      role="alert"
+      className="flex flex-col items-center justify-center gap-4 rounded-xl border bg-card px-6 py-14 text-center shadow-xs"
+    >
       <div className="flex max-w-md flex-col gap-2">
         <h2 className="text-xl font-semibold text-foreground">
           Не удалось загрузить хакатоны
@@ -55,15 +60,7 @@ function DatabaseErrorState() {
           Попробуйте обновить страницу позже.
         </p>
       </div>
-      <Link
-        href="/hackathons"
-        className={cn(
-          buttonVariants({ variant: "default", size: "lg" }),
-          "mt-2 min-h-11 px-6 text-base"
-        )}
-      >
-        Обновить страницу
-      </Link>
+      <RetryButton variant="default" size="lg" className="mt-2 px-6" />
     </div>
   );
 }
@@ -79,15 +76,26 @@ function EmptyDatabaseState() {
           Как только организаторы добавят хакатоны, они появятся здесь.
         </p>
       </div>
-      <Link
-        href="/"
-        className={cn(
-          buttonVariants({ variant: "outline", size: "lg" }),
-          "mt-2 min-h-11 px-6 text-base"
-        )}
-      >
-        На главную
-      </Link>
+      <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
+        <Link
+          href="/create"
+          className={cn(
+            buttonVariants({ variant: "default", size: "lg" }),
+            "min-h-11 px-6 text-base"
+          )}
+        >
+          Создать хакатон
+        </Link>
+        <Link
+          href="/"
+          className={cn(
+            buttonVariants({ variant: "outline", size: "lg" }),
+            "min-h-11 px-6 text-base"
+          )}
+        >
+          На главную
+        </Link>
+      </div>
     </div>
   );
 }
@@ -95,8 +103,11 @@ function EmptyDatabaseState() {
 function NoMatchesState() {
   return (
     <div className="flex flex-col items-center justify-center gap-4 rounded-xl border bg-card px-6 py-14 text-center shadow-xs">
-      <div aria-hidden="true" className="text-4xl">
-        🔍
+      <div
+        aria-hidden="true"
+        className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground"
+      >
+        <Search className="size-6" aria-hidden="true" />
       </div>
       <div className="flex max-w-md flex-col gap-2">
         <h2 className="text-xl font-semibold text-foreground">
@@ -115,6 +126,49 @@ function NoMatchesState() {
       >
         Сбросить фильтры
       </Link>
+    </div>
+  );
+}
+
+function HackathonsCatalogSkeleton() {
+  return (
+    <div role="status" aria-busy="true" className="flex flex-col gap-6">
+      <span className="sr-only">Загружаем список хакатонов...</span>
+
+      <div className="grid grid-cols-1 gap-4 rounded-xl border border-border bg-card p-4 sm:grid-cols-2 lg:grid-cols-12">
+        <div className="h-11 animate-pulse rounded-lg bg-muted/40 motion-reduce:animate-none sm:col-span-2 lg:col-span-6" />
+        <div className="h-11 animate-pulse rounded-lg bg-muted/40 motion-reduce:animate-none lg:col-span-3" />
+        <div className="h-11 animate-pulse rounded-lg bg-muted/40 motion-reduce:animate-none lg:col-span-3" />
+        <div className="h-11 animate-pulse rounded-lg bg-muted/40 motion-reduce:animate-none sm:col-span-2 lg:col-span-5" />
+        <div className="flex justify-end gap-2 sm:col-span-2 lg:col-span-7">
+          <div className="h-11 w-32 animate-pulse rounded-lg bg-muted/50 motion-reduce:animate-none" />
+        </div>
+      </div>
+
+      <div className="h-6 w-40 animate-pulse rounded bg-muted/40 motion-reduce:animate-none" />
+
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {[0, 1, 2, 3, 4, 5].map((item) => (
+          <div
+            key={item}
+            className="flex h-96 flex-col overflow-hidden rounded-xl border border-border bg-card"
+          >
+            <div className="h-32 animate-pulse bg-muted/50 motion-reduce:animate-none" />
+            <div className="flex flex-1 flex-col gap-3 p-6">
+              <div className="flex gap-2">
+                <div className="h-6 w-20 animate-pulse rounded-full bg-muted/50 motion-reduce:animate-none" />
+                <div className="h-6 w-20 animate-pulse rounded-full bg-muted/40 motion-reduce:animate-none" />
+              </div>
+              <div className="h-7 w-3/4 animate-pulse rounded bg-muted/50 motion-reduce:animate-none" />
+              <div className="h-10 w-full animate-pulse rounded bg-muted/40 motion-reduce:animate-none" />
+              <div className="mt-auto space-y-2">
+                <div className="h-4 w-2/3 animate-pulse rounded bg-muted/40 motion-reduce:animate-none" />
+                <div className="h-4 w-1/2 animate-pulse rounded bg-muted/40 motion-reduce:animate-none" />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -163,7 +217,7 @@ async function HackathonsCatalogContent({ searchParams }: HackathonsPageProps) {
         action="/hackathons"
         className="grid grid-cols-1 gap-4 rounded-xl border bg-card p-4 shadow-xs sm:grid-cols-2 lg:grid-cols-12 lg:items-end"
       >
-        <div className="flex flex-col gap-2 sm:col-span-2 lg:col-span-4 xl:col-span-3">
+        <div className="flex flex-col gap-2 sm:col-span-2 lg:col-span-6">
           <Label htmlFor="catalog-q" className="text-sm font-medium">
             Поиск
           </Label>
@@ -177,62 +231,80 @@ async function HackathonsCatalogContent({ searchParams }: HackathonsPageProps) {
           />
         </div>
 
-        <div className="flex flex-col gap-2 lg:col-span-4 xl:col-span-2">
+        <div className="flex flex-col gap-2 lg:col-span-3">
           <Label htmlFor="catalog-status" className="text-sm font-medium">
             Статус
           </Label>
-          <select
-            id="catalog-status"
-            name="status"
-            defaultValue={params.status}
-            className="min-h-11 w-full rounded-lg border border-input bg-background px-3 text-base text-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-          >
-            <option value="all">Все статусы</option>
-            <option value="upcoming">Скоро</option>
-            <option value="active">Идёт сейчас</option>
-            <option value="finished">Завершён</option>
-          </select>
+          <div className="relative">
+            <select
+              id="catalog-status"
+              name="status"
+              defaultValue={params.status}
+              className="min-h-11 w-full appearance-none rounded-lg border border-input bg-background px-3 pr-9 text-base text-foreground outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/40"
+            >
+              <option value="all">Все статусы</option>
+              <option value="upcoming">Скоро</option>
+              <option value="active">Идёт сейчас</option>
+              <option value="finished">Завершён</option>
+            </select>
+            <ChevronDown
+              className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+              aria-hidden="true"
+            />
+          </div>
         </div>
 
-        <div className="flex flex-col gap-2 lg:col-span-4 xl:col-span-2">
+        <div className="flex flex-col gap-2 lg:col-span-3">
           <Label htmlFor="catalog-format" className="text-sm font-medium">
             Формат
           </Label>
-          <select
-            id="catalog-format"
-            name="format"
-            defaultValue={params.format}
-            className="min-h-11 w-full rounded-lg border border-input bg-background px-3 text-base text-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-          >
-            <option value="all">Все форматы</option>
-            <option value="online">Онлайн</option>
-            <option value="offline">Офлайн</option>
-            <option value="hybrid">Гибрид</option>
-          </select>
+          <div className="relative">
+            <select
+              id="catalog-format"
+              name="format"
+              defaultValue={params.format}
+              className="min-h-11 w-full appearance-none rounded-lg border border-input bg-background px-3 pr-9 text-base text-foreground outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/40"
+            >
+              <option value="all">Все форматы</option>
+              <option value="online">Онлайн</option>
+              <option value="offline">Офлайн</option>
+              <option value="hybrid">Гибрид</option>
+            </select>
+            <ChevronDown
+              className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+              aria-hidden="true"
+            />
+          </div>
         </div>
 
-        <div className="flex flex-col gap-2 sm:col-span-2 lg:col-span-6 xl:col-span-2">
+        <div className="flex flex-col gap-2 sm:col-span-2 lg:col-span-5">
           <Label htmlFor="catalog-sort" className="text-sm font-medium">
             Сортировка
           </Label>
-          <select
-            id="catalog-sort"
-            name="sort"
-            defaultValue={params.sort}
-            className="min-h-11 w-full rounded-lg border border-input bg-background px-3 text-base text-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-          >
-            <option value="actual">Сначала актуальные</option>
-            <option value="date-asc">Сначала ближайшие</option>
-            <option value="date-desc">Сначала новые</option>
-            <option value="participants">Больше участников</option>
-          </select>
+          <div className="relative">
+            <select
+              id="catalog-sort"
+              name="sort"
+              defaultValue={params.sort}
+              className="min-h-11 w-full appearance-none rounded-lg border border-input bg-background px-3 pr-9 text-base text-foreground outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/40"
+            >
+              <option value="actual">Сначала актуальные</option>
+              <option value="date-asc">Сначала ближайшие</option>
+              <option value="date-desc">Сначала новые</option>
+              <option value="participants">Больше участников</option>
+            </select>
+            <ChevronDown
+              className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+              aria-hidden="true"
+            />
+          </div>
         </div>
 
-        <div className="flex flex-wrap gap-2 sm:col-span-2 lg:col-span-6 lg:justify-end xl:col-span-3">
+        <div className="flex flex-wrap gap-2 sm:col-span-2 lg:col-span-7 lg:justify-end">
           <Button
             type="submit"
             size="default"
-            className="min-h-11 flex-1 px-5 text-base sm:flex-initial"
+            className="min-h-11 flex-1 whitespace-nowrap px-5 text-base sm:flex-initial"
           >
             Показать
           </Button>
@@ -241,7 +313,7 @@ async function HackathonsCatalogContent({ searchParams }: HackathonsPageProps) {
               href="/hackathons"
               className={cn(
                 buttonVariants({ variant: "outline", size: "default" }),
-                "min-h-11 px-4 text-base"
+                "min-h-11 whitespace-nowrap px-4 text-base"
               )}
             >
               Сбросить
@@ -250,15 +322,24 @@ async function HackathonsCatalogContent({ searchParams }: HackathonsPageProps) {
         </div>
       </form>
 
-      <p className="text-base font-medium text-muted-foreground">
-        {formatFoundCount(catalogPage.total)}
-      </p>
+      {catalogPage.total > 0 ? (
+        <p
+          aria-live="polite"
+          className="text-base font-medium text-muted-foreground"
+        >
+          {formatFoundCount(catalogPage.total)}
+        </p>
+      ) : null}
 
       {catalogPage.items.length > 0 ? (
         <>
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {catalogPage.items.map((hackathon) => (
-              <HackathonCard key={hackathon.id} hackathon={hackathon} />
+              <HackathonCard
+                key={hackathon.id}
+                hackathon={hackathon}
+                headingLevel="h2"
+              />
             ))}
           </div>
 
@@ -336,13 +417,7 @@ export default function HackathonsPage({ searchParams }: HackathonsPageProps) {
         </p>
       </div>
 
-      <Suspense
-        fallback={
-          <p className="text-base text-muted-foreground">
-            Загружаем список хакатонов...
-          </p>
-        }
-      >
+      <Suspense fallback={<HackathonsCatalogSkeleton />}>
         <HackathonsCatalogContent searchParams={searchParams} />
       </Suspense>
     </div>

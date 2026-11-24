@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { Plus } from "lucide-react";
 import { HackathonManageItem } from "@/components/hackathon-manage-item";
+import { RetryButton } from "@/components/retry-button";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { getHackathonsByOrganizer } from "@/db/queries";
@@ -48,7 +49,7 @@ async function MyHackathonsContent() {
 
   if (hasError) {
     return (
-      <Card>
+      <Card role="alert">
         <CardContent className="space-y-4 p-6 text-center sm:p-8">
           <h2 className="text-xl font-semibold text-foreground">
             Не удалось загрузить ваши хакатоны
@@ -58,15 +59,7 @@ async function MyHackathonsContent() {
             страницу чуть позже.
           </p>
           <div>
-            <Link
-              href="/my-hackathons"
-              className={buttonVariants({
-                variant: "outline",
-                className: "min-h-11 px-5 text-base",
-              })}
-            >
-              Обновить страницу
-            </Link>
+            <RetryButton variant="outline" />
           </div>
         </CardContent>
       </Card>

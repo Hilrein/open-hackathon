@@ -6,6 +6,7 @@ import { connection } from "next/server";
 import { Mail, Users } from "lucide-react";
 import { CopyHackathonLinkButton } from "@/components/copy-hackathon-link-button";
 import { OrganizerHackathonNav } from "@/components/organizer-hackathon-nav";
+import { RetryButton } from "@/components/retry-button";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -72,7 +73,7 @@ async function HackathonParticipantsContent({
 
   if (hasError || !result) {
     return (
-      <Card className="mx-auto w-full max-w-xl">
+      <Card role="alert" className="mx-auto w-full max-w-xl">
         <CardContent className="space-y-4 p-6 text-center sm:p-8">
           <h1 className="text-xl font-semibold text-foreground">
             Не удалось загрузить участников
@@ -81,15 +82,7 @@ async function HackathonParticipantsContent({
             Попробуйте обновить страницу позже.
           </p>
           <div>
-            <Link
-              href={`/my-hackathons/${encodeURIComponent(slug)}/participants`}
-              className={buttonVariants({
-                variant: "outline",
-                className: "min-h-11 px-5 text-base",
-              })}
-            >
-              Обновить страницу
-            </Link>
+            <RetryButton variant="outline" />
           </div>
         </CardContent>
       </Card>

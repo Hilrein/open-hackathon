@@ -4,6 +4,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { ParticipationItem } from "@/components/participation-item";
+import { RetryButton } from "@/components/retry-button";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -54,7 +55,7 @@ async function MyParticipationsContent() {
 
   if (hasError) {
     return (
-      <Card>
+      <Card role="alert">
         <CardContent className="space-y-4 p-6 text-center sm:p-8">
           <h2 className="text-xl font-semibold text-foreground">
             Не удалось загрузить ваши участия
@@ -63,15 +64,7 @@ async function MyParticipationsContent() {
             Попробуйте обновить страницу позже.
           </p>
           <div>
-            <Link
-              href="/my-participations"
-              className={buttonVariants({
-                variant: "outline",
-                className: "min-h-11 px-5 text-base",
-              })}
-            >
-              Обновить страницу
-            </Link>
+            <RetryButton variant="outline" />
           </div>
         </CardContent>
       </Card>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { ArrowLeft, Calendar, Clock, Trophy } from "lucide-react";
 import { HackathonResultItem } from "@/components/hackathon-result-item";
+import { RetryButton } from "@/components/retry-button";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -78,9 +79,10 @@ export async function generateMetadata({
 
 function ResultsSkeleton() {
   return (
-    <div className="space-y-4">
-      <div className="h-10 w-64 animate-pulse rounded-lg bg-muted/50" />
-      <div className="h-44 animate-pulse rounded-xl border border-border bg-muted/40" />
+    <div role="status" aria-busy="true" className="space-y-4">
+      <span className="sr-only">Загружаем результаты хакатона...</span>
+      <div className="h-10 w-64 animate-pulse rounded-lg bg-muted/50 motion-reduce:animate-none" />
+      <div className="h-44 animate-pulse rounded-xl border border-border bg-muted/40 motion-reduce:animate-none" />
     </div>
   );
 }
@@ -100,7 +102,7 @@ async function HackathonResultsContent({ params }: HackathonResultsPageProps) {
 
   if (hasError || !data) {
     return (
-      <Card className="mx-auto w-full max-w-xl">
+      <Card role="alert" className="mx-auto w-full max-w-xl">
         <CardContent className="space-y-4 p-6 text-center sm:p-8">
           <h1 className="text-xl font-semibold text-foreground">
             Не удалось загрузить результаты
@@ -109,15 +111,7 @@ async function HackathonResultsContent({ params }: HackathonResultsPageProps) {
             Попробуйте обновить страницу позже.
           </p>
           <div>
-            <Link
-              href={`/hackathons/${encodeURIComponent(slug)}/results`}
-              className={buttonVariants({
-                variant: "outline",
-                className: "min-h-11 px-5 text-base",
-              })}
-            >
-              Обновить страницу
-            </Link>
+            <RetryButton variant="outline" />
           </div>
         </CardContent>
       </Card>

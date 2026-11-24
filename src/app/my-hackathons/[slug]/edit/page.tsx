@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { CreateHackathonWizard } from "@/components/create-hackathon-wizard";
 import { OrganizerHackathonNav } from "@/components/organizer-hackathon-nav";
+import { RetryButton } from "@/components/retry-button";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { getHackathonWithOwnerBySlug } from "@/db/queries";
@@ -53,7 +54,7 @@ async function EditHackathonContent({ params }: EditHackathonContentProps) {
 
   if (hasError) {
     return (
-      <Card className="mx-auto w-full max-w-xl">
+      <Card role="alert" className="mx-auto w-full max-w-xl">
         <CardContent className="space-y-4 p-6 text-center sm:p-8">
           <h1 className="text-xl font-semibold text-foreground">
             Не удалось загрузить хакатон
@@ -62,15 +63,7 @@ async function EditHackathonContent({ params }: EditHackathonContentProps) {
             Попробуйте обновить страницу позже.
           </p>
           <div>
-            <Link
-              href={`/my-hackathons/${encodeURIComponent(slug)}/edit`}
-              className={buttonVariants({
-                variant: "outline",
-                className: "min-h-11 px-5 text-base",
-              })}
-            >
-              Обновить страницу
-            </Link>
+            <RetryButton variant="outline" />
           </div>
         </CardContent>
       </Card>

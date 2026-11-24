@@ -4,6 +4,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { ArrowLeft, Calendar, ExternalLink, FileCode2, Lock } from "lucide-react";
+import { RetryButton } from "@/components/retry-button";
 import { TeamPanel } from "@/components/team-panel";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -65,7 +66,7 @@ async function HackathonTeamContent({ params }: HackathonTeamContentProps) {
 
   if (hasError || !context) {
     return (
-      <Card className="mx-auto w-full max-w-xl">
+      <Card role="alert" className="mx-auto w-full max-w-xl">
         <CardContent className="space-y-4 p-6 text-center sm:p-8">
           <h1 className="text-xl font-semibold text-foreground">
             Не удалось загрузить команду
@@ -74,15 +75,7 @@ async function HackathonTeamContent({ params }: HackathonTeamContentProps) {
             Попробуйте обновить страницу позже.
           </p>
           <div>
-            <Link
-              href={`/my-participations/${encodeURIComponent(slug)}/team`}
-              className={buttonVariants({
-                variant: "outline",
-                className: "min-h-11 px-5 text-base",
-              })}
-            >
-              Обновить страницу
-            </Link>
+            <RetryButton variant="outline" />
           </div>
         </CardContent>
       </Card>

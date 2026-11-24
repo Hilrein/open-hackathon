@@ -357,7 +357,10 @@ export function SubmissionReviewForm({
           Оценка организатора
         </h3>
         {review ? (
-          <Badge variant="secondary" className="gap-1 px-2.5 py-0.5 text-sm">
+          <Badge
+            variant="secondary"
+            className="gap-1 px-2.5 py-0.5 text-sm tabular-nums"
+          >
             <Star className="size-3.5 fill-current" aria-hidden="true" />
             {review.score} из 10
           </Badge>
@@ -365,11 +368,8 @@ export function SubmissionReviewForm({
       </div>
 
       {successMessage ? (
-        <Alert
-          role="status"
-          className="border-primary/30 bg-primary/10 text-foreground"
-        >
-          <CheckCircle2 className="size-4 text-primary" aria-hidden="true" />
+        <Alert variant="success" role="status">
+          <CheckCircle2 className="size-4" aria-hidden="true" />
           <AlertDescription className="text-sm font-medium">
             {successMessage}
           </AlertDescription>
@@ -473,7 +473,7 @@ export function SubmissionReviewForm({
               <span
                 id={feedbackCountId}
                 className={cn(
-                  "text-xs",
+                  "text-xs tabular-nums",
                   feedback.trim().length > 2000
                     ? "font-medium text-destructive"
                     : "text-muted-foreground"

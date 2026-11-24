@@ -14,6 +14,7 @@ import {
   Users,
   UsersRound,
 } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -261,12 +262,9 @@ export function HackathonManageItem({ hackathon }: HackathonManageItemProps) {
           </AlertDialogHeader>
 
           {errorMessage ? (
-            <p
-              role="alert"
-              className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
-            >
-              {errorMessage}
-            </p>
+            <Alert variant="destructive" role="alert">
+              <AlertDescription>{errorMessage}</AlertDescription>
+            </Alert>
           ) : null}
 
           <AlertDialogFooter>

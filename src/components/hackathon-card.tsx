@@ -42,12 +42,12 @@ export function HackathonCard({
         href={`/hackathons/${hackathon.id}`}
         className="group block h-full rounded-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
       >
-        <Card className="flex h-full flex-col gap-0 overflow-hidden border bg-card py-0 shadow-sm transition-colors group-hover:border-primary/40 group-hover:bg-accent/25">
+        <Card className="flex h-full flex-col gap-0 overflow-hidden py-0 transition-[transform,box-shadow,border-color] duration-150 group-hover:-translate-y-0.5 group-hover:border-border-strong group-hover:shadow-card-hover motion-reduce:transform-none motion-reduce:transition-none">
           <div
             aria-hidden="true"
-            className="flex h-32 items-center justify-center border-b bg-muted/60 px-6"
+            className="flex h-32 items-center justify-center border-b border-border bg-surface-elevated px-6"
           >
-            <div className="flex size-14 items-center justify-center rounded-xl bg-background text-2xl font-bold text-muted-foreground shadow-xs">
+            <div className="flex size-14 items-center justify-center rounded-xl bg-brand-gradient text-2xl font-bold text-primary-foreground shadow-card">
               {firstLetter}
             </div>
           </div>
@@ -113,7 +113,7 @@ export function HackathonCard({
                   className="size-4 shrink-0 text-muted-foreground"
                   aria-hidden="true"
                 />
-                <span className="min-w-0 break-words">
+                <span className="min-w-0 break-words tabular-nums">
                   {hackathon.maxParticipants !== undefined
                     ? `${hackathon.participantsCount} / ${hackathon.maxParticipants} ${getParticipantsWord(hackathon.maxParticipants)}`
                     : formatParticipantsCount(hackathon.participantsCount)}

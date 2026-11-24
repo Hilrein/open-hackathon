@@ -277,19 +277,19 @@ function SignInSkeleton() {
         <CardContent className="flex flex-col gap-5">
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-2">
-              <div className="h-6 w-16 animate-pulse rounded-md bg-muted/60 motion-reduce:animate-none" />
+              <div className="h-6 w-16 animate-pulse rounded-lg bg-muted/60 motion-reduce:animate-none" />
               <div className="h-11 w-full animate-pulse rounded-lg bg-muted/40 motion-reduce:animate-none" />
             </div>
 
             <div className="flex flex-col gap-2">
-              <div className="h-6 w-20 animate-pulse rounded-md bg-muted/60 motion-reduce:animate-none" />
+              <div className="h-6 w-20 animate-pulse rounded-lg bg-muted/60 motion-reduce:animate-none" />
               <div className="h-11 w-full animate-pulse rounded-lg bg-muted/40 motion-reduce:animate-none" />
             </div>
 
             <div className="mt-2 h-12 w-full animate-pulse rounded-lg bg-muted/60 motion-reduce:animate-none" />
           </div>
 
-          <div className="mx-auto h-6 w-56 animate-pulse rounded-md bg-muted/40 motion-reduce:animate-none" />
+          <div className="mx-auto h-6 w-56 animate-pulse rounded-lg bg-muted/40 motion-reduce:animate-none" />
         </CardContent>
       </Card>
     </div>

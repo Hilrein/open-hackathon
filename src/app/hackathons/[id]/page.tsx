@@ -328,7 +328,7 @@ async function HackathonDetailContent({
                   className="size-5 shrink-0 text-muted-foreground"
                   aria-hidden="true"
                 />
-                <span>{participantsText}</span>
+                <span className="tabular-nums">{participantsText}</span>
               </div>
 
               {hackathon.prizePool && (
@@ -344,7 +344,7 @@ async function HackathonDetailContent({
 
           <section className="flex flex-col gap-3">
             <h2 className="text-2xl font-bold text-foreground">Описание</h2>
-            <div className="flex flex-col gap-3 text-base leading-relaxed text-foreground">
+            <div className="prose-measure flex flex-col gap-3 text-base leading-relaxed text-foreground">
               {paragraphs.map((paragraph, index) => (
                 <p key={index}>{paragraph}</p>
               ))}

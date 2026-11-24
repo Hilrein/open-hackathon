@@ -157,13 +157,15 @@ export function ParticipateButton({
   return (
     <div className="flex flex-col gap-3">
       {isFinished && participating ? (
-        <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/50 px-3.5 py-2.5 text-sm font-medium text-foreground">
+        <Alert variant="default" role="status">
           <CheckCircle2
             className="size-4 shrink-0 text-muted-foreground"
             aria-hidden="true"
           />
-          <span>Вы участвовали</span>
-        </div>
+          <AlertDescription className="font-medium text-foreground">
+            Вы участвовали
+          </AlertDescription>
+        </Alert>
       ) : isFinished ? (
         <Button
           type="button"
@@ -176,13 +178,12 @@ export function ParticipateButton({
       ) : participating ? (
         <div className="flex flex-col gap-3">
           {showParticipatingStatus ? (
-            <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/10 px-3.5 py-2.5 text-sm font-medium text-foreground">
-              <CheckCircle2
-                className="size-4 shrink-0 text-primary"
-                aria-hidden="true"
-              />
-              <span>Вы участвуете</span>
-            </div>
+            <Alert variant="success" role="status">
+              <CheckCircle2 className="size-4 shrink-0" aria-hidden="true" />
+              <AlertDescription className="font-medium">
+                Вы участвуете
+              </AlertDescription>
+            </Alert>
           ) : null}
           <Button
             type="button"

@@ -573,11 +573,8 @@ export function SubmissionForm({
       </Alert>
 
       {successMessage ? (
-        <Alert
-          role="status"
-          className="border-primary/30 bg-primary/10 text-foreground"
-        >
-          <CheckCircle2 className="size-4 text-primary" aria-hidden="true" />
+        <Alert variant="success" role="status">
+          <CheckCircle2 className="size-4" aria-hidden="true" />
           <AlertDescription className="text-sm font-medium sm:text-base">
             {successMessage}
           </AlertDescription>
@@ -603,7 +600,7 @@ export function SubmissionForm({
                 <span
                   id="submission-title-count"
                   className={cn(
-                    "text-xs",
+                    "text-xs tabular-nums",
                     title.trim().length > 120
                       ? "font-medium text-destructive"
                       : "text-muted-foreground"
@@ -657,7 +654,7 @@ export function SubmissionForm({
                 <span
                   id="submission-description-count"
                   className={cn(
-                    "text-xs",
+                    "text-xs tabular-nums",
                     description.trim().length > 2000
                       ? "font-medium text-destructive"
                       : "text-muted-foreground"

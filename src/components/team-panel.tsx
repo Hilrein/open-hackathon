@@ -513,11 +513,8 @@ export function TeamPanel({
   return (
     <div className="space-y-5">
       {success ? (
-        <Alert
-          role="status"
-          className="border-primary/30 bg-primary/10 text-foreground"
-        >
-          <CheckCircle2 className="size-4 text-primary" aria-hidden="true" />
+        <Alert variant="success" role="status">
+          <CheckCircle2 className="size-4" aria-hidden="true" />
           <AlertDescription className="text-sm font-medium sm:text-base">
             {success}
           </AlertDescription>

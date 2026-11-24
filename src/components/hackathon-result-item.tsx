@@ -41,7 +41,7 @@ export function HackathonResultItem({ item }: HackathonResultItemProps) {
           <div className="flex flex-wrap items-center justify-between gap-2.5">
             <Badge
               variant={getPlaceBadgeVariant(item.place)}
-              className="gap-1.5 px-3 py-1 text-sm font-semibold"
+              className="gap-1.5 px-3 py-1 text-sm font-semibold tabular-nums"
             >
               <Award className="size-4" aria-hidden="true" />
               {item.place} место
@@ -49,7 +49,7 @@ export function HackathonResultItem({ item }: HackathonResultItemProps) {
 
             <Badge
               variant="secondary"
-              className="gap-1.5 px-3 py-1 text-sm font-semibold"
+              className="gap-1.5 px-3 py-1 text-sm font-semibold tabular-nums"
             >
               <Star className="size-3.5 fill-current" aria-hidden="true" />
               {item.score} из 10

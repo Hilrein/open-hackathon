@@ -44,7 +44,7 @@ export function SubmissionReviewView({
             </h2>
             <Badge
               variant="secondary"
-              className="gap-1.5 px-3 py-1 text-base font-semibold"
+              className="gap-1.5 px-3 py-1 text-base font-semibold tabular-nums"
             >
               <Star className="size-4 fill-current" aria-hidden="true" />
               {review.score} из 10

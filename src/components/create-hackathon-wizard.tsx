@@ -662,11 +662,8 @@ export function CreateHackathonWizard({
       </nav>
 
       {saveSuccessMessage && (
-        <Alert
-          role="status"
-          className="border-primary/30 bg-primary/10 p-4 text-foreground"
-        >
-          <CheckCircle2 className="size-4 text-primary" aria-hidden="true" />
+        <Alert variant="success" role="status" className="p-4">
+          <CheckCircle2 className="size-4" aria-hidden="true" />
           <AlertDescription className="text-base font-medium">
             {saveSuccessMessage}
           </AlertDescription>
@@ -718,7 +715,7 @@ export function CreateHackathonWizard({
                     <span
                       id="wizard-title-count"
                       className={cn(
-                        "text-sm",
+                        "text-sm tabular-nums",
                         titleLength > 120
                           ? "font-medium text-destructive"
                           : "text-muted-foreground"
@@ -771,7 +768,7 @@ export function CreateHackathonWizard({
                     <span
                       id="wizard-description-count"
                       className={cn(
-                        "text-sm",
+                        "text-sm tabular-nums",
                         descriptionLength > 2000
                           ? "font-medium text-destructive"
                           : "text-muted-foreground"
